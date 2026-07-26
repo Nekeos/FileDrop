@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import os
 from .protocol import *
 
@@ -9,10 +9,11 @@ class FileTransferServer:
         self.port = port
         os.makedirs(save_dir, exist_ok=True)
         self._server = None
+        self.on_file_received = None
 
     async def handle_client(self, reader, writer):
         addr = writer.get_extra_info('peername')
-        print(f"[+] Подключен: {addr}")
+        print(f"[+] Connected: {addr}")
 
         try:
             request = await read_message(reader)
@@ -24,22 +25,21 @@ class FileTransferServer:
                 return
 
             if request.get('type') != 'file_transfer_request':
-                raise ValueError(f"Неизвестный тип: {request.get('type')}")
+                raise ValueError(f"Unknown type: {request.get('type')}")
 
             file_name = request['file_name']
             file_size = request['file_size']
-            print(f"[*] Запрошен файл: {file_name} ({file_size} байт)")
+            print(f"[*] Incoming: {file_name} ({file_size} bytes)")
 
             free_space = get_free_space(self.save_dir)
             if free_space < file_size:
                 response = create_message({
                     "type": "file_transfer_response",
                     "accepted": False,
-                    "message": f"Недостаточно места. Свободно: {free_space // 1024 // 1024} МБ"
+                    "message": f"No space. Free: {free_space // 1024 // 1024} MB"
                 })
                 writer.write(response)
                 await writer.drain()
-                print(f"[!] Отказано: недостаточно места")
                 return
 
             response = create_message({
@@ -54,16 +54,27 @@ class FileTransferServer:
 
             with open(filepath, 'wb') as f:
                 while received < file_size:
-                    chunk_size = min(CHUNK_SIZE, file_size - received)
+                    remaining = file_size - received
+                    chunk_size = min(CHUNK_SIZE, remaining)
                     chunk = await reader.read(chunk_size)
                     if not chunk:
                         break
                     f.write(chunk)
                     received += len(chunk)
-                    progress = (received / file_size) * 100
-                    print(f"  Прогресс: {progress:.1f}%")
 
-            status = "ok" if received == file_size else "error"
+            if received == file_size:
+                status = "ok"
+                print(f"[✓] File saved: {file_name}")
+                if self.on_file_received:
+                    self.on_file_received(file_name)
+            else:
+                status = "error"
+                print(f"[✗] Incomplete: {received}/{file_size}")
+                try:
+                    os.remove(filepath)
+                except:
+                    pass
+
             complete_msg = create_message({
                 "type": "transfer_complete",
                 "status": status,
@@ -71,15 +82,10 @@ class FileTransferServer:
             })
             writer.write(complete_msg)
             await writer.drain()
-
-            if status == "ok":
-                print(f"[✓] Файл принят: {file_name}")
-            else:
-                print(f"[✗] Ошибка: получено {received} из {file_size}")
-                os.remove(filepath)
+            await asyncio.sleep(0.3)
 
         except Exception as e:
-            print(f"[!] Ошибка: {e}")
+            print(f"[!] Error: {e}")
             try:
                 error_msg = create_message({
                     "type": "file_transfer_response",
@@ -93,16 +99,15 @@ class FileTransferServer:
         finally:
             writer.close()
             await writer.wait_closed()
-            print(f"[-] Отключен: {addr}")
 
     async def start(self):
         self._server = await asyncio.start_server(
             self.handle_client, self.host, self.port
         )
-        print(f"[*] Сервер запущен на {self.host}:{self.port}")
+        print(f"[*] Server listening on {self.host}:{self.port}")
 
     async def stop(self):
         if self._server:
             self._server.close()
             await self._server.wait_closed()
-            print("[*] Сервер остановлен")
+            print("[*] Server stopped")
