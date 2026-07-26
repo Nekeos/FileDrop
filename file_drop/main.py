@@ -5,6 +5,7 @@ import json
 import webbrowser
 import locale
 
+
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QLabel, QLineEdit, QFileDialog,
@@ -31,94 +32,28 @@ RUSTORE_URL = "https://www.rustore.ru/catalog/developer/ch7shq"
 GITHUB_URL = "https://github.com/Nekeos/FileDrop/releases"
 TELEGRAM_URL = "t.me/Axkuon"
 
-LANGUAGES = {
-    "en": {
-        "title": "FileDrop Desktop",
-        "server_starting": "Starting server...",
-        "server_running": "Server running (port 45000)",
-        "send": "Send",
-        "receive": "Receive",
-        "settings": "Settings",
-        "device_ip": "Device IP:",
-        "no_file": "No file selected",
-        "browse": "Browse",
-        "send_btn": "Send",
-        "qr_code": "QR-code",
-        "scan_qr": "Scan QR-code",
-        "received_files": "Received files",
-        "open_folder": "Open folder",
-        "save_to": "Save to:",
-        "change": "Change",
-        "language": "Language:",
-        "qr_position": "QR position:",
-        "qr_bottom": "Bottom",
-        "qr_tab": "Tab",
-        "refresh_qr": "Refresh QR",
-        "connecting": "Connecting...",
-        "checking": "Checking connection...",
-        "sending": "Sending file...",
-        "sent": "Sent:",
-        "kb": "KB",
-        "success_sent": "File sent successfully!",
-        "device_unreachable": "Device unreachable.",
-        "no_file_warn": "No file",
-        "no_file_msg": "Please select a file to send.",
-        "no_ip_warn": "No IP",
-        "no_ip_msg": "Enter device IP address.",
-        "select_file": "Select file",
-        "select_folder": "Select save folder",
-        "folder_changed": "Folder changed",
-        "folder_changed_msg": "Files will be saved to:",
-        "error": "Error",
-        "success": "Success",
-        "ip_example": "For example: 192.168.1.5",
-        "footer": "FileDrop Desktop v1.0 | TCP port: 45000",
-        "qr_hint": "1. Open app on Android\n2. Press Scan QR\n3. Point camera at code",
-    },
-    "ru": {
-        "title": "FileDrop Desktop",
-        "server_starting": "Запуск сервера...",
-        "server_running": "Сервер запущен (порт 45000)",
-        "send": "Отправить",
-        "receive": "Получить",
-        "settings": "Настройки",
-        "device_ip": "IP устройства:",
-        "no_file": "Файл не выбран",
-        "browse": "Обзор",
-        "send_btn": "Отправить",
-        "qr_code": "QR-код",
-        "scan_qr": "Сканируйте QR-код",
-        "received_files": "Полученные файлы",
-        "open_folder": "Открыть папку",
-        "save_to": "Сохранять в:",
-        "change": "Сменить",
-        "language": "Язык:",
-        "qr_position": "Положение QR:",
-        "qr_bottom": "Снизу",
-        "qr_tab": "Вкладка",
-        "refresh_qr": "Обновить QR",
-        "connecting": "Подключение...",
-        "checking": "Проверка соединения...",
-        "sending": "Отправка файла...",
-        "sent": "Отправлено:",
-        "kb": "КБ",
-        "success_sent": "Файл успешно отправлен!",
-        "device_unreachable": "Устройство недоступно.",
-        "no_file_warn": "Нет файла",
-        "no_file_msg": "Пожалуйста, выберите файл для отправки.",
-        "no_ip_warn": "Нет IP",
-        "no_ip_msg": "Введите IP-адрес устройства.",
-        "select_file": "Выбрать файл",
-        "select_folder": "Выбрать папку сохранения",
-        "folder_changed": "Папка изменена",
-        "folder_changed_msg": "Файлы будут сохраняться в:",
-        "error": "Ошибка",
-        "success": "Успех",
-        "ip_example": "Например: 192.168.1.5",
-        "footer": "FileDrop Desktop v1.0 | TCP порт: 45000",
-        "qr_hint": "1. Откройте приложение на Android\n2. Нажмите Сканировать QR\n3. Наведите камеру на код",
-    }
-}
+# Загрузка переводов
+def load_translations():
+    # Пробуем найти в корне проекта
+    translations_path = os.path.join(APP_DIR, "translations.json")
+    
+    # Если нет в корне - ищем рядом с текущим файлом
+    if not os.path.exists(translations_path):
+        translations_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "translations.json")
+    
+    try:
+        with open(translations_path, "r", encoding="utf-8-sig") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Файл переводов не найден: {translations_path}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"Ошибка в JSON: {e}")
+        return None
+
+LANGUAGES = load_translations()
+
+
 
 def load_settings():
     defaults = {
@@ -127,7 +62,7 @@ def load_settings():
         "qr_position": "bottom"
     }
     try:
-        with open(SETTINGS_FILE, 'r') as f:
+        with open(SETTINGS_FILE, 'r', encoding="utf-8") as f:
             data = json.load(f)
             for k, v in defaults.items():
                 if k not in data:
@@ -137,7 +72,7 @@ def load_settings():
         return defaults
 
 def save_settings(settings):
-    with open(SETTINGS_FILE, 'w') as f:
+    with open(SETTINGS_FILE, 'w', encoding="utf-8") as f:
         json.dump(settings, f, indent=2)
 
 def get_system_language():
@@ -163,9 +98,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.settings = load_settings()
         self.lang_code = self.settings["language"] if self.settings["language"] != "system" else get_system_language()
-        self.tr = LANGUAGES[self.lang_code]
+        self.tr = LANGUAGES.get(self.lang_code, LANGUAGES.get("en", {}))
 
-        self.setWindowTitle(self.tr["title"])
+        self.setWindowTitle(self.t("title"))
         self.setMinimumSize(800, 550)
         self.setStyleSheet("""
             QMainWindow { background-color: #fafafa; }
@@ -178,6 +113,7 @@ class MainWindow(QMainWindow):
         os.makedirs(self.save_dir, exist_ok=True)
 
         self.server = FileTransferServer(save_dir=self.save_dir, port=PORT)
+        self.server.on_file_received = lambda fn: self.server_signals.file_received.emit(fn)
         self.server_signals = ServerSignals()
         self.server_signals.status_update.connect(self.on_server_status)
         self.server_signals.file_received.connect(self.on_file_received)
@@ -193,6 +129,10 @@ class MainWindow(QMainWindow):
         self.received_files = []
         asyncio.ensure_future(self.start_server())
 
+    def t(self, key, default=None):
+        """Безопасное получение перевода"""
+        return self.tr.get(key, default if default is not None else key)
+
     def init_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
@@ -201,7 +141,7 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(15, 15, 15, 15)
 
         # Status bar
-        self.status_label = QLabel(self.tr["server_starting"])
+        self.status_label = QLabel(self.t("server_starting"))
         self.status_label.setFont(QFont("Arial", 11))
         main_layout.addWidget(self.status_label)
 
@@ -214,25 +154,25 @@ class MainWindow(QMainWindow):
         send_layout.setSpacing(12)
 
         ip_layout = QHBoxLayout()
-        ip_layout.addWidget(QLabel(self.tr["device_ip"]))
+        ip_layout.addWidget(QLabel(self.t("device_ip")))
         self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText(self.tr["ip_example"])
+        self.ip_input.setPlaceholderText(self.t("ip_example"))
         self.ip_input.setMinimumHeight(32)
         ip_layout.addWidget(self.ip_input)
         send_layout.addLayout(ip_layout)
 
         file_layout = QHBoxLayout()
-        self.file_path_label = QLabel(self.tr["no_file"])
+        self.file_path_label = QLabel(self.t("no_file"))
         self.file_path_label.setStyleSheet("color: #888; border: 1px dashed #ccc; padding: 8px; border-radius: 4px;")
         file_layout.addWidget(self.file_path_label)
 
-        browse_btn = QPushButton(self.tr["browse"])
+        browse_btn = QPushButton(self.t("browse"))
         browse_btn.setStyleSheet(self._btn_style("#FF9800", "#F57C00"))
         browse_btn.clicked.connect(self.browse_file)
         file_layout.addWidget(browse_btn)
         send_layout.addLayout(file_layout)
 
-        self.send_btn = QPushButton(self.tr["send_btn"])
+        self.send_btn = QPushButton(self.t("send_btn"))
         self.send_btn.setStyleSheet(self._btn_style("#4CAF50", "#388E3C"))
         self.send_btn.clicked.connect(self.send_file)
         self.send_btn.setMinimumHeight(45)
@@ -251,7 +191,7 @@ class MainWindow(QMainWindow):
         self.send_status.setAlignment(Qt.AlignCenter)
         send_layout.addWidget(self.send_status)
         send_layout.addStretch()
-        self.tabs.addTab(self.send_tab, self.tr["send"])
+        self.tabs.addTab(self.send_tab, self.t("send"))
 
         # Receive tab
         self.recv_tab = QWidget()
@@ -259,17 +199,17 @@ class MainWindow(QMainWindow):
         recv_layout.setSpacing(12)
 
         dir_frame = QHBoxLayout()
-        dir_frame.addWidget(QLabel(self.tr["save_to"]))
+        dir_frame.addWidget(QLabel(self.t("save_to")))
         self.dir_label = QLabel(self.save_dir)
         self.dir_label.setStyleSheet("color: #333; border: 1px solid #ddd; padding: 6px; border-radius: 4px; background: #f9f9f9;")
         dir_frame.addWidget(self.dir_label, stretch=1)
-        change_dir_btn = QPushButton(self.tr["change"])
+        change_dir_btn = QPushButton(self.t("change"))
         change_dir_btn.setStyleSheet(self._btn_style("#2196F3", "#1976D2"))
         change_dir_btn.clicked.connect(self.change_save_dir)
         dir_frame.addWidget(change_dir_btn)
         recv_layout.addLayout(dir_frame)
 
-        recv_title = QLabel(self.tr["received_files"])
+        recv_title = QLabel(self.t("received_files"))
         recv_title.setFont(QFont("Arial", 13, QFont.Bold))
         recv_layout.addWidget(recv_title)
 
@@ -277,17 +217,17 @@ class MainWindow(QMainWindow):
         self.received_list.setStyleSheet("font-size: 13px;")
         recv_layout.addWidget(self.received_list)
 
-        open_folder_btn = QPushButton(self.tr["open_folder"])
+        open_folder_btn = QPushButton(self.t("open_folder"))
         open_folder_btn.setStyleSheet(self._btn_style("#607D8B", "#455A64"))
         open_folder_btn.clicked.connect(self.open_folder)
         recv_layout.addWidget(open_folder_btn)
-        self.tabs.addTab(self.recv_tab, self.tr["receive"])
+        self.tabs.addTab(self.recv_tab, self.t("receive"))
 
         # QR tab (hidden by default)
         self.qr_tab = QWidget()
         qr_tab_layout = QVBoxLayout(self.qr_tab)
         qr_tab_layout.setSpacing(12)
-        qr_title = QLabel(self.tr["scan_qr"])
+        qr_title = QLabel(self.t("scan_qr"))
         qr_title.setAlignment(Qt.AlignCenter)
         qr_title.setFont(QFont("Arial", 14, QFont.Bold))
         qr_tab_layout.addWidget(qr_title)
@@ -300,24 +240,24 @@ class MainWindow(QMainWindow):
         self.qr_info_label_tab.setAlignment(Qt.AlignCenter)
         self.qr_info_label_tab.setFont(QFont("Consolas", 11))
         qr_tab_layout.addWidget(self.qr_info_label_tab)
-        qr_hint = QLabel(self.tr["qr_hint"])
+        qr_hint = QLabel(self.t("qr_hint"))
         qr_hint.setAlignment(Qt.AlignCenter)
         qr_hint.setStyleSheet("color: #aaa; font-size: 11px;")
         qr_tab_layout.addWidget(qr_hint)
         qr_tab_layout.addStretch()
-        self.tabs.addTab(self.qr_tab, self.tr["qr_code"])
+        self.tabs.addTab(self.qr_tab, self.t("qr_code"))
 
         # Settings tab
         self.settings_tab = QWidget()
         settings_layout = QVBoxLayout(self.settings_tab)
         settings_layout.setSpacing(15)
-        settings_title = QLabel(self.tr["settings"])
+        settings_title = QLabel(self.t("settings"))
         settings_title.setFont(QFont("Arial", 13, QFont.Bold))
         settings_layout.addWidget(settings_title)
 
         # Language
         lang_layout = QHBoxLayout()
-        lang_layout.addWidget(QLabel(self.tr["language"]))
+        lang_layout.addWidget(QLabel(self.t("language")))
         self.lang_combo = QComboBox()
         self.lang_combo.addItem("English", "en")
         self.lang_combo.addItem("Русский", "ru")
@@ -332,10 +272,10 @@ class MainWindow(QMainWindow):
 
         # QR position
         qr_pos_layout = QHBoxLayout()
-        qr_pos_layout.addWidget(QLabel(self.tr["qr_position"]))
+        qr_pos_layout.addWidget(QLabel(self.t("qr_position")))
         self.qr_group = QButtonGroup()
-        self.qr_bottom_radio = QRadioButton(self.tr["qr_bottom"])
-        self.qr_tab_radio = QRadioButton(self.tr["qr_tab"])
+        self.qr_bottom_radio = QRadioButton(self.t("qr_bottom"))
+        self.qr_tab_radio = QRadioButton(self.t("qr_tab"))
         self.qr_group.addButton(self.qr_bottom_radio, 1)
         self.qr_group.addButton(self.qr_tab_radio, 3)
 
@@ -346,17 +286,16 @@ class MainWindow(QMainWindow):
 
         self.qr_group.buttonClicked.connect(self.change_qr_position)
         qr_pos_layout.addWidget(self.qr_bottom_radio)
-        qr_pos_layout.addWidget(self.qr_right_radio)
         qr_pos_layout.addWidget(self.qr_tab_radio)
         qr_pos_layout.addStretch()
         settings_layout.addLayout(qr_pos_layout)
         settings_layout.addStretch()
-        self.tabs.addTab(self.settings_tab, self.tr["settings"])
+        self.tabs.addTab(self.settings_tab, self.t("settings"))
 
         main_layout.addWidget(self.tabs)
 
         # Footer
-        footer = QLabel(self.tr["footer"])
+        footer = QLabel(self.t("footer"))
         footer.setAlignment(Qt.AlignCenter)
         footer.setStyleSheet("color: #aaa; font-size: 10px;")
         main_layout.addWidget(footer)
@@ -411,13 +350,8 @@ class MainWindow(QMainWindow):
 
     def apply_qr_position(self):
         pos = self.settings["qr_position"]
-        # Remove QR tab if not needed
-        tab_count = self.tabs.count()
-        # Always keep Send, Receive, Settings. QR tab at index 2?
-        # Rebuild logic: show/hide qr_panel and qr_tab
         self.qr_panel.setVisible(pos == "bottom")
 
-        # Find QR tab index
         qr_tab_idx = -1
         for i in range(self.tabs.count()):
             if self.tabs.tabText(i) in ["QR-code", "QR-код"]:
@@ -426,7 +360,7 @@ class MainWindow(QMainWindow):
 
         if pos == "tab":
             if qr_tab_idx == -1:
-                self.tabs.insertTab(2, self.qr_tab, self.tr["qr_code"])
+                self.tabs.insertTab(2, self.qr_tab, self.t("qr_code"))
         else:
             if qr_tab_idx >= 0:
                 self.tabs.removeTab(qr_tab_idx)
@@ -452,16 +386,16 @@ class MainWindow(QMainWindow):
         new_lang = self.lang_combo.currentData()
         self.settings["language"] = new_lang
         save_settings(self.settings)
-        QMessageBox.information(self, "Info", "Restart app to apply language")
+        QMessageBox.information(self, self.t("info"), self.t("restart_msg"))
 
     def change_qr_position(self, btn):
-        pos_map = {1: "bottom", 2: "right", 3: "tab"}
+        pos_map = {1: "bottom", 3: "tab"}
         self.settings["qr_position"] = pos_map[self.qr_group.id(btn)]
         save_settings(self.settings)
         self.apply_qr_position()
 
     def change_save_dir(self):
-        path = QFileDialog.getExistingDirectory(self, self.tr["select_folder"])
+        path = QFileDialog.getExistingDirectory(self, self.t("select_folder"))
         if path:
             self.save_dir = path
             self.dir_label.setText(path)
@@ -469,11 +403,11 @@ class MainWindow(QMainWindow):
             save_settings(self.settings)
             self.server.save_dir = path
             self.received_list.clear()
-            QMessageBox.information(self, self.tr["folder_changed"], f"{self.tr['folder_changed_msg']}\n{path}")
+            QMessageBox.information(self, self.t("folder_changed"), f"{self.t('folder_changed_msg')}\n{path}")
 
     async def start_server(self):
         await self.server.start()
-        self.server_signals.status_update.emit(self.tr["server_running"])
+        self.server_signals.status_update.emit(self.t("server_running"))
 
     def on_server_status(self, text):
         self.status_label.setText(text)
@@ -484,7 +418,7 @@ class MainWindow(QMainWindow):
         self.received_list.addItem(f"📄 {filename}")
 
     def browse_file(self):
-        filepath, _ = QFileDialog.getOpenFileName(self, self.tr["select_file"])
+        filepath, _ = QFileDialog.getOpenFileName(self, self.t("select_file"))
         if filepath:
             self.selected_file = filepath
             self.file_path_label.setText(os.path.basename(filepath))
@@ -492,39 +426,39 @@ class MainWindow(QMainWindow):
 
     def send_file(self):
         if not hasattr(self, 'selected_file'):
-            QMessageBox.warning(self, self.tr["no_file_warn"], self.tr["no_file_msg"])
+            QMessageBox.warning(self, self.t("no_file_warn"), self.t("no_file_msg"))
             return
         ip = self.ip_input.text().strip()
         if not ip:
-            QMessageBox.warning(self, self.tr["no_ip_warn"], self.tr["no_ip_msg"])
+            QMessageBox.warning(self, self.t("no_ip_warn"), self.t("no_ip_msg"))
             return
         self.send_btn.setEnabled(False)
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
-        self.send_status.setText(self.tr["connecting"])
+        self.send_status.setText(self.t("connecting"))
         asyncio.ensure_future(self._do_send_file(ip))
 
     async def _do_send_file(self, ip):
         client = FileTransferClient(ip, PORT)
         try:
-            self.client_signals.status_update.emit(self.tr["checking"])
+            self.client_signals.status_update.emit(self.t("checking"))
             if not await client.ping():
-                self.client_signals.transfer_complete.emit(False, self.tr["device_unreachable"])
+                self.client_signals.transfer_complete.emit(False, self.t("device_unreachable"))
                 return
-            self.client_signals.status_update.emit(self.tr["sending"])
+            self.client_signals.status_update.emit(self.t("sending"))
             await client.send_file(
                 self.selected_file,
                 progress_callback=lambda sent, total: self.client_signals.progress_update.emit(sent, total)
             )
-            self.client_signals.transfer_complete.emit(True, self.tr["success_sent"])
+            self.client_signals.transfer_complete.emit(True, self.t("success_sent"))
         except Exception as e:
-            self.client_signals.transfer_complete.emit(False, f"{self.tr['error']}: {e}")
+            self.client_signals.transfer_complete.emit(False, f"{self.t('error')}: {e}")
 
     def on_progress_update(self, sent, total):
         self.progress_bar.setMaximum(total)
         self.progress_bar.setValue(sent)
         pct = (sent / total) * 100
-        self.send_status.setText(f"{self.tr['sent']} {sent//1024} / {total//1024} {self.tr['kb']} ({pct:.1f}%)")
+        self.send_status.setText(f"{self.t('sent')} {sent//1024} / {total//1024} {self.t('kb')} ({pct:.1f}%)")
 
     def on_client_status(self, text):
         self.send_status.setText(text)
@@ -534,10 +468,10 @@ class MainWindow(QMainWindow):
         if success:
             self.progress_bar.setValue(self.progress_bar.maximum())
             self.send_status.setStyleSheet("color: green; font-weight: bold;")
-            QMessageBox.information(self, self.tr["success"], message)
+            QMessageBox.information(self, self.t("success"), message)
         else:
             self.send_status.setStyleSheet("color: red; font-weight: bold;")
-            QMessageBox.critical(self, self.tr["error"], message)
+            QMessageBox.critical(self, self.t("error"), message)
         self.send_status.setText(message)
 
     def open_folder(self):
