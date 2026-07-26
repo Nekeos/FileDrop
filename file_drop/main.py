@@ -27,9 +27,9 @@ PORT = 45000
 SETTINGS_FILE = os.path.join(APP_DIR, "settings.json")
 ICONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons")
 
-RUSTORE_URL = "#"
-GITHUB_URL = "#"
-TELEGRAM_URL = "#"
+RUSTORE_URL = "https://www.rustore.ru/catalog/developer/ch7shq"
+GITHUB_URL = "https://github.com/Nekeos/FileDrop/releases"
+TELEGRAM_URL = "t.me/Axkuon"
 
 LANGUAGES = {
     "en": {
@@ -52,7 +52,6 @@ LANGUAGES = {
         "language": "Language:",
         "qr_position": "QR position:",
         "qr_bottom": "Bottom",
-        "qr_right": "Right",
         "qr_tab": "Tab",
         "refresh_qr": "Refresh QR",
         "connecting": "Connecting...",
@@ -96,7 +95,6 @@ LANGUAGES = {
         "language": "Язык:",
         "qr_position": "Положение QR:",
         "qr_bottom": "Снизу",
-        "qr_right": "Справа",
         "qr_tab": "Вкладка",
         "refresh_qr": "Обновить QR",
         "connecting": "Подключение...",
@@ -337,15 +335,11 @@ class MainWindow(QMainWindow):
         qr_pos_layout.addWidget(QLabel(self.tr["qr_position"]))
         self.qr_group = QButtonGroup()
         self.qr_bottom_radio = QRadioButton(self.tr["qr_bottom"])
-        self.qr_right_radio = QRadioButton(self.tr["qr_right"])
         self.qr_tab_radio = QRadioButton(self.tr["qr_tab"])
         self.qr_group.addButton(self.qr_bottom_radio, 1)
-        self.qr_group.addButton(self.qr_right_radio, 2)
         self.qr_group.addButton(self.qr_tab_radio, 3)
 
-        if self.qr_position == "right":
-            self.qr_right_radio.setChecked(True)
-        elif self.qr_position == "tab":
+        if self.qr_position == "tab":
             self.qr_tab_radio.setChecked(True)
         else:
             self.qr_bottom_radio.setChecked(True)
