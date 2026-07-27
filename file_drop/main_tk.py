@@ -1,3 +1,13 @@
+# Coded by Nekeos | Htoya227 for AxKuon.ru & t.me/Axkuon
+# Personal links: https://github.com/Nekeos, https://t.me/Nekeos_DEV, https://x.com/Nekeos227 
+
+# Кодил Nekeos | Htoya227 для AxKuon.ru и t.me/Axkuon
+# Личные ссылки: https://github.com/Nekeos, https://t.me/Nekeos_DEV, https://x.com/Nekeos227
+#Я уже устал, я хочу спать
+
+
+# imports
+
 import sys
 import asyncio
 import os
