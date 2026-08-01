@@ -12,6 +12,7 @@ File transfer between PC and Android over Wi-Fi.
 - QR-code connection / QR-код для подключения
 - Custom save folder / Выбор папки сохранения
 - English & Russian UI / Русский и английский язык
+- Dark and Light themes / Тёмная и светлая темы
 - Windows (PySide6) + Linux (Tkinter)
 
 ## Install / Установка
