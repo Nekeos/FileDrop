@@ -3,10 +3,7 @@
 
 # Кодил Nekeos | Htoya227 для AxKuon.ru и t.me/Axkuon
 # Личные ссылки: https://github.com/Nekeos, https://t.me/Nekeos_DEV, https://x.com/Nekeos227
-#Я уже устал, я хочу спать
-
-
-# imports
+# Я уже устал, я хочу спать
 
 import sys
 import asyncio
@@ -14,6 +11,7 @@ import os
 import json
 import webbrowser
 import locale
+import subprocess
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout,
@@ -38,24 +36,49 @@ SETTINGS_FILE = os.path.join(APP_DIR, "settings.json")
 
 RUSTORE_URL = "https://www.rustore.ru/catalog/developer/ch7shq"
 GITHUB_URL = "https://github.com/Nekeos/FileDrop/releases"
-TELEGRAM_URL = "https://t.me/Axkuon"
-
-# Translation
+TELEGRAM_URL = "t.me/Axkuon"
 
 def load_translations():
     path = os.path.join(APP_DIR, "translations.json")
     if not os.path.exists(path):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "translations.json")
-    try:
-        with open(path, "r", encoding="utf-8-sig") as f:
-            return json.load(f)
-    except:
-        pass
-    return None
+    with open(path, "r", encoding="utf-8-sig") as f:
+        return json.load(f)
 
+LANGUAGES = load_translations()
+
+LIGHT_STYLE = """
+QMainWindow { background-color: #fafafa; }
+QTabWidget::pane { border: 1px solid #ddd; border-radius: 8px; background: white; }
+QTabBar::tab { padding: 10px 20px; font-size: 13px; background: #f0f0f0; }
+QTabBar::tab:selected { background: white; border-bottom: 2px solid #4CAF50; }
+QLabel { color: #333; }
+QLineEdit { background: white; color: #333; border: 1px solid #ddd; padding: 6px; border-radius: 4px; }
+QListWidget { background: white; color: #333; }
+QComboBox { background: white; color: #333; }
+QRadioButton { color: #333; }
+QFrame { background: white; }
+QProgressBar { background: #eee; border: 1px solid #ddd; border-radius: 6px; }
+QProgressBar::chunk { background-color: #4CAF50; border-radius: 6px; }
+"""
+
+DARK_STYLE = """
+QMainWindow { background-color: #1e1e1e; }
+QTabWidget::pane { border: 1px solid #444; border-radius: 8px; background: #2d2d2d; }
+QTabBar::tab { padding: 10px 20px; font-size: 13px; background: #333; color: #ccc; }
+QTabBar::tab:selected { background: #2d2d2d; border-bottom: 2px solid #4CAF50; color: white; }
+QLabel { color: #ccc; }
+QLineEdit { background: #333; color: #ccc; border: 1px solid #555; padding: 6px; border-radius: 4px; }
+QListWidget { background: #333; color: #ccc; }
+QComboBox { background: #333; color: #ccc; }
+QRadioButton { color: #ccc; }
+QFrame { background: #2d2d2d; }
+QProgressBar { background: #444; border: 1px solid #555; border-radius: 6px; }
+QProgressBar::chunk { background-color: #4CAF50; border-radius: 6px; }
+"""
 
 def load_settings():
-    defaults = {"save_dir": os.path.join(os.path.expanduser("~"), "Downloads", "FileDrop"), "language": "system", "qr_position": "bottom"}
+    defaults = {"save_dir": os.path.join(os.path.expanduser("~"), "Downloads", "FileDrop"), "language": "system", "qr_position": "bottom", "theme": "light"}
     try:
         with open(SETTINGS_FILE, 'r', encoding="utf-8") as f:
             data = json.load(f)
@@ -91,8 +114,6 @@ class MainWindow(QMainWindow):
         self.tr = LANGUAGES.get(self.lang_code, LANGUAGES["en"])
         self.setWindowTitle(self.tr["title"])
 
-        # Icon
-
         if getattr(sys, 'frozen', False):
             icon_path = os.path.join(sys._MEIPASS, "icon.png")
         else:
@@ -101,7 +122,6 @@ class MainWindow(QMainWindow):
             self.setWindowIcon(QIcon(icon_path))
 
         self.setMinimumSize(800, 550)
-        self.setStyleSheet("QMainWindow{background:#fafafa} QTabWidget::pane{border:1px solid #ddd;border-radius:8px;background:white} QTabBar::tab{padding:10px 20px;font-size:13px} QTabBar::tab:selected{background:white;border-bottom:2px solid #4CAF50}")
         self.save_dir = self.settings["save_dir"]
         os.makedirs(self.save_dir, exist_ok=True)
         self.server = FileTransferServer(save_dir=self.save_dir, port=PORT)
@@ -114,52 +134,50 @@ class MainWindow(QMainWindow):
         self.client_signals.status_update.connect(self.on_client_status)
         self.client_signals.transfer_complete.connect(self.on_transfer_complete)
         self.init_ui()
+        self.apply_theme()
         self.received_files = []
         asyncio.ensure_future(self.start_server())
+
+    def apply_theme(self):
+        if self.settings.get("theme", "light") == "dark":
+            self.setStyleSheet(DARK_STYLE)
+        else:
+            self.setStyleSheet(LIGHT_STYLE)
 
     def init_ui(self):
         c = QWidget(); self.setCentralWidget(c)
         ml = QVBoxLayout(c); ml.setSpacing(10); ml.setContentsMargins(15,15,15,15)
         self.status_label = QLabel(self.tr["server_starting"]); self.status_label.setFont(QFont("Arial",11)); ml.addWidget(self.status_label)
         self.tabs = QTabWidget()
-
-        # Send
-
         st = QWidget(); sl = QVBoxLayout(st); sl.setSpacing(12)
         ip_l = QHBoxLayout(); ip_l.addWidget(QLabel(self.tr["device_ip"]))
         self.ip_input = QLineEdit(); self.ip_input.setPlaceholderText(self.tr["ip_example"]); self.ip_input.setMinimumHeight(32); ip_l.addWidget(self.ip_input); sl.addLayout(ip_l)
         fl = QHBoxLayout()
-        self.file_path_label = QLabel(self.tr["no_file"]); self.file_path_label.setStyleSheet("color:#888;border:1px dashed #ccc;padding:8px;border-radius:4px"); fl.addWidget(self.file_path_label)
+        self.file_path_label = QLabel(self.tr["no_file"]); fl.addWidget(self.file_path_label)
         bb = QPushButton(self.tr["browse"]); bb.setStyleSheet(self._btn("#FF9800","#F57C00")); bb.clicked.connect(self.browse_file); fl.addWidget(bb); sl.addLayout(fl)
         self.send_btn = QPushButton(self.tr["send_btn"]); self.send_btn.setStyleSheet(self._btn("#4CAF50","#388E3C")); self.send_btn.clicked.connect(self.send_file); self.send_btn.setMinimumHeight(45); sl.addWidget(self.send_btn)
         self.progress_bar = QProgressBar(); self.progress_bar.setVisible(False); self.progress_bar.setMinimumHeight(25); sl.addWidget(self.progress_bar)
         self.send_status = QLabel(""); self.send_status.setAlignment(Qt.AlignCenter); sl.addWidget(self.send_status); sl.addStretch()
         self.tabs.addTab(st, self.tr["send"])
-
-        # Receive
-
         rt = QWidget(); rl = QVBoxLayout(rt); rl.setSpacing(12)
         df = QHBoxLayout(); df.addWidget(QLabel(self.tr["save_to"]))
-        self.dir_label = QLabel(self.save_dir); self.dir_label.setStyleSheet("color:#333;border:1px solid #ddd;padding:6px;border-radius:4px;background:#f9f9f9"); df.addWidget(self.dir_label, stretch=1)
+        self.dir_label = QLabel(self.save_dir); df.addWidget(self.dir_label, stretch=1)
         cb = QPushButton(self.tr["change"]); cb.setStyleSheet(self._btn("#2196F3","#1976D2")); cb.clicked.connect(self.change_save_dir); df.addWidget(cb); rl.addLayout(df)
         rl.addWidget(QLabel(self.tr["received_files"], font=QFont("Arial",13,QFont.Bold)))
         self.received_list = QListWidget(); rl.addWidget(self.received_list)
         ob = QPushButton(self.tr["open_folder"]); ob.setStyleSheet(self._btn("#607D8B","#455A64")); ob.clicked.connect(self.open_folder); rl.addWidget(ob)
         self.tabs.addTab(rt, self.tr["receive"])
-
-        # QR tab
-
         self.qr_tab = QWidget(); ql = QVBoxLayout(self.qr_tab); ql.setSpacing(12)
         ql.addWidget(QLabel(self.tr["scan_qr"], alignment=Qt.AlignCenter, font=QFont("Arial",14,QFont.Bold)))
-        self.qr_label_tab = QLabel(alignment=Qt.AlignCenter); self.qr_label_tab.setMinimumSize(260,260); self.qr_label_tab.setStyleSheet("border:2px solid #e0e0e0;border-radius:10px;padding:5px"); ql.addWidget(self.qr_label_tab)
+        self.qr_label_tab = QLabel(alignment=Qt.AlignCenter); self.qr_label_tab.setMinimumSize(260,260); ql.addWidget(self.qr_label_tab)
         self.qr_info_label_tab = QLabel("", alignment=Qt.AlignCenter, font=QFont("Consolas",11)); ql.addWidget(self.qr_info_label_tab)
-        ql.addWidget(QLabel(self.tr["qr_hint"], alignment=Qt.AlignCenter, styleSheet="color:#aaa;font-size:11px")); ql.addStretch()
+        ql.addWidget(QLabel(self.tr["qr_hint"], alignment=Qt.AlignCenter)); ql.addStretch()
         self.tabs.addTab(self.qr_tab, self.tr["qr_code"])
-
-        # Settings
-
         set_t = QWidget(); set_l = QVBoxLayout(set_t); set_l.setSpacing(15)
         set_l.addWidget(QLabel(self.tr["settings"], font=QFont("Arial",13,QFont.Bold)))
+        th_l = QHBoxLayout(); th_l.addWidget(QLabel(self.tr["theme"]))
+        self.theme_combo = QComboBox(); self.theme_combo.addItem(self.tr["theme_light"], "light"); self.theme_combo.addItem(self.tr["theme_dark"], "dark")
+        self.theme_combo.setCurrentIndex(0 if self.settings.get("theme","light")=="light" else 1); self.theme_combo.currentIndexChanged.connect(self.change_theme); th_l.addWidget(self.theme_combo); th_l.addStretch(); set_l.addLayout(th_l)
         lg_l = QHBoxLayout(); lg_l.addWidget(QLabel(self.tr["language"]))
         self.lang_combo = QComboBox(); self.lang_combo.addItem("English","en"); self.lang_combo.addItem("Русский","ru")
         self.lang_combo.setCurrentIndex(1 if self.lang_code=="ru" else 0); self.lang_combo.currentIndexChanged.connect(self.change_language); lg_l.addWidget(self.lang_combo); lg_l.addStretch(); set_l.addLayout(lg_l)
@@ -170,19 +188,24 @@ class MainWindow(QMainWindow):
         self.qr_group.buttonClicked.connect(self.change_qr_position); qp_l.addWidget(self.qr_bottom_radio); qp_l.addWidget(self.qr_tab_radio); qp_l.addStretch(); set_l.addLayout(qp_l); set_l.addStretch()
         self.tabs.addTab(set_t, self.tr["settings"])
         ml.addWidget(self.tabs)
-        ml.addWidget(QLabel(self.tr["footer"], alignment=Qt.AlignCenter, styleSheet="color:#aaa;font-size:10px"))
+        ml.addWidget(QLabel(self.tr["footer"], alignment=Qt.AlignCenter))
         ll = QHBoxLayout(); ll.setSpacing(8)
         for txt,url,clr in [("RuStore",RUSTORE_URL,"#005FF9"),("GitHub",GITHUB_URL,"#24292e"),("Telegram",TELEGRAM_URL,"#0088cc")]:
             b = QPushButton(txt); b.setStyleSheet(f"background:{clr};color:white;padding:6px 14px;border-radius:4px;font-size:11px;font-weight:bold;border:none"); b.clicked.connect(lambda _,u=url: webbrowser.open(u)); ll.addWidget(b)
         ll.addStretch(); ml.addLayout(ll)
-        self.qr_panel = QFrame(styleSheet="background:white;border-radius:12px;padding:10px")
+        self.qr_panel = QFrame()
         qp_l = QVBoxLayout(self.qr_panel); qp_l.setSpacing(5)
-        self.qr_label_bottom = QLabel(alignment=Qt.AlignCenter); self.qr_label_bottom.setMinimumSize(150,150); self.qr_label_bottom.setMaximumSize(180,180); self.qr_label_bottom.setStyleSheet("border:2px solid #e0e0e0;border-radius:8px;padding:3px"); qp_l.addWidget(self.qr_label_bottom, alignment=Qt.AlignCenter)
-        self.qr_info_label_bottom = QLabel("", alignment=Qt.AlignCenter, font=QFont("Consolas",9), styleSheet="color:#555"); qp_l.addWidget(self.qr_info_label_bottom)
+        self.qr_label_bottom = QLabel(alignment=Qt.AlignCenter); self.qr_label_bottom.setMinimumSize(150,150); self.qr_label_bottom.setMaximumSize(180,180); qp_l.addWidget(self.qr_label_bottom, alignment=Qt.AlignCenter)
+        self.qr_info_label_bottom = QLabel("", alignment=Qt.AlignCenter, font=QFont("Consolas",9)); qp_l.addWidget(self.qr_info_label_bottom)
         self.qr_panel.setVisible(False); ml.addWidget(self.qr_panel)
         self.apply_qr_position()
 
     def _btn(self, bg, hb): return f"QPushButton{{background:{bg};color:white;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:bold;border:none}} QPushButton:hover{{background:{hb}}}"
+
+    def change_theme(self):
+        self.settings["theme"] = self.theme_combo.currentData()
+        save_settings(self.settings)
+        self.apply_theme()
 
     def apply_qr_position(self):
         pos = self.settings["qr_position"]; self.qr_panel.setVisible(pos=="bottom")
@@ -221,7 +244,7 @@ class MainWindow(QMainWindow):
 
     def browse_file(self):
         p, _ = QFileDialog.getOpenFileName(self, self.tr["select_file"])
-        if p: self.selected_file = p; self.file_path_label.setText(os.path.basename(p)); self.file_path_label.setStyleSheet("color:#333;border:1px solid #4CAF50;padding:8px")
+        if p: self.selected_file = p; self.file_path_label.setText(os.path.basename(p))
 
     def send_file(self):
         if not hasattr(self,'selected_file'): QMessageBox.warning(self, self.tr["no_file_warn"], self.tr["no_file_msg"]); return
@@ -252,7 +275,11 @@ class MainWindow(QMainWindow):
         self.send_status.setText(msg)
 
     def open_folder(self):
-        p = os.path.abspath(self.save_dir); os.startfile(p) if os.name=='nt' else os.system(f'xdg-open "{p}"')
+        p = os.path.abspath(self.save_dir)
+        if os.name == 'nt':
+            os.startfile(p)
+        else:
+            subprocess.Popen(['xdg-open', p])
 
     def closeEvent(self, e): asyncio.ensure_future(self.server.stop()); e.accept()
 
