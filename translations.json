@@ -1,4 +1,4 @@
-﻿{
+{
   "en": {
     "title": "FileDrop Desktop",
     "server_starting": "Starting server...",
@@ -11,6 +11,7 @@
     "browse": "Browse",
     "send_btn": "Send",
     "qr_code": "QR-code",
+    "scan_qr": "Scan QR-code",
     "received_files": "Received files",
     "open_folder": "Open folder",
     "save_to": "Save to:",
@@ -39,7 +40,11 @@
     "ip_example": "For example: 192.168.1.5",
     "footer": "FileDrop Desktop v1.0 | TCP port: 45000",
     "qr_hint": "1. Open app on Android\n2. Press Scan QR\n3. Point camera at code",
-    "restart_msg": "Restart app to apply language"
+    "restart_msg": "Restart app to apply language",
+    "info": "Info",
+    "theme": "Theme:",
+    "theme_light": "Light",
+    "theme_dark": "Dark"
   },
   "ru": {
     "title": "FileDrop Desktop",
@@ -53,6 +58,7 @@
     "browse": "Обзор",
     "send_btn": "Отправить",
     "qr_code": "QR-код",
+    "scan_qr": "Сканируйте QR-код",
     "received_files": "Полученные файлы",
     "open_folder": "Открыть папку",
     "save_to": "Сохранять в:",
@@ -81,6 +87,10 @@
     "ip_example": "Например: 192.168.1.5",
     "footer": "FileDrop Desktop v1.0 | TCP порт: 45000",
     "qr_hint": "1. Откройте приложение\n2. Сканируйте QR\n3. Наведите камеру",
-    "restart_msg": "Перезапустите для смены языка"
+    "restart_msg": "Перезапустите для смены языка",
+    "info": "Инфо",
+    "theme": "Тема:",
+    "theme_light": "Светлая",
+    "theme_dark": "Тёмная"
   }
 }
