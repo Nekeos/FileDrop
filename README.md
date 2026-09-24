@@ -11,15 +11,17 @@ File transfer between PC and Android over Wi-Fi.
 - Send & receive files / Отправка и приём файлов
 - QR-code connection / QR-код для подключения
 - Custom save folder / Выбор папки сохранения
-- English & Russian UI / Русский и английский язык
+- 7 UI languages: EN, RU, DE, ES, JP, CH, KZ / 7 языков интерфейса
 - Dark and Light themes / Тёмная и светлая темы
+- Drag-n-drop files / Drag-n-drop файлов
+- Toast notifications / Toast-уведомления
 - Windows (PySide6) + Linux (Tkinter)
 
 ## Install / Установка
 
 ### Windows
-Download FileDrop.exe from Releases and run.
-Скачай FileDrop.exe из Releases и запусти.
+Download FileDrop_Setup.exe from Releases and run.
+Скачай FileDrop_Setup.exe из Releases и запусти.
 
 ### Linux
 Download FileDrop from Releases:
@@ -45,8 +47,10 @@ TCP порт 45000. Формат: [4 байта длина JSON][JSON UTF-8][ф�
 ## Links / Ссылки
 - Website / Сайт: https://www.Axkuon.ru
 - GitHub: https://github.com/Nekeos/FileDrop
-- RuStore: https://www.rustore.ru/catalog/app/com.myname.socketflow
+- [RuStore](https://www.rustore.ru/catalog/app/com.myname.socketflow)
 - Telegram: https://t.me/Axkuon
+- VK: https://vk.ru/axkuon
+- MAX: https://max.ru/channel_axkuon
 
 ## License / Лицензия
 MIT
