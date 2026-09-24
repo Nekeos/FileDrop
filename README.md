@@ -45,12 +45,11 @@ TCP port 45000. Format: [4 bytes JSON length][JSON UTF-8][file bytes]
 TCP порт 45000. Формат: [4 байта длина JSON][JSON UTF-8][файл]
 
 ## Links / Ссылки
-- Website / Сайт: https://www.Axkuon.ru
-- GitHub: https://github.com/Nekeos/FileDrop
+- [Website / Сайт](https://www.Axkuon.ru)
 - [RuStore](https://www.rustore.ru/catalog/app/com.myname.socketflow)
-- Telegram: https://t.me/Axkuon
-- VK: https://vk.ru/axkuon
-- MAX: https://max.ru/channel_axkuon
+- [Telegram](https://t.me/Axkuon)
+- [VK](https://vk.ru/axkuon)
+- [MAX](https://max.ru/channel_axkuon)
 
 ## License / Лицензия
 MIT
