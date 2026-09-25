@@ -13,7 +13,6 @@ File transfer between PC and Android over Wi-Fi.
 - Custom save folder / Выбор папки сохранения
 - 7 UI languages: EN, RU, DE, ES, JP, CH, KZ / 7 языков интерфейса
 - Dark and Light themes / Тёмная и светлая темы
-- Drag-n-drop files / Drag-n-drop файлов
 - Toast notifications / Toast-уведомления
 - Windows (PySide6) + Linux (Tkinter)
 
@@ -23,18 +22,11 @@ File transfer between PC and Android over Wi-Fi.
 Download FileDrop_Setup.exe from Releases and run.
 Скачай FileDrop_Setup.exe из Releases и запусти.
 
-### Linux
-Download FileDrop from Releases:
-Скачай FileDrop из Releases:
-chmod +x FileDrop
-./FileDrop
-
 ### From source / Из исходников
 git clone https://github.com/Nekeos/FileDrop.git
 cd FileDrop
 pip install -r requirements.txt
 python -m file_drop.main        # Windows
-python -m file_drop.main_tk     # Linux
 
 ## Android app / Android-приложение
 FileDrop for Android by soxr.net
