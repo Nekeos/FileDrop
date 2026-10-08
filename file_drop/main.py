@@ -1,5 +1,5 @@
 # Coded by Nekeos | Htoya227 for AxKuon.ru & t.me/Axkuon
-# Personal links: https://github.com/Nekeos, https://t.me/Nekeos_DEV, https://x.com/Nekeos227 
+# Personal links: https://github.com/Nekeos, https://t.me/Nekeos_DEV, https://x.com/Nekeos227
 
 # Кодил Nekeos | Htoya227 для AxKuon.ru и t.me/Axkuon
 # Личные ссылки: https://github.com/Nekeos, https://t.me/Nekeos_DEV, https://x.com/Nekeos227
@@ -15,29 +15,11 @@ import subprocess
 import random
 import urllib.request
 
-GITHUB_API = "https://api.github.com/repos/Nekeos/FileDrop/releases/latest"
-
-async def check_updates(current_version):
-    try:
-        req = urllib.request.Request(
-            GITHUB_API,
-            headers={'User-Agent': 'FileDrop'}
-        )
-        with urllib.request.urlopen(req, timeout=5) as r:
-            data = json.loads(r.read().decode())
-        latest = data.get('tag_name', '').lstrip('v')
-        html_url = data.get('html_url', '')
-        if latest and latest != current_version.lstrip('v'):
-            return {'available': True, 'version': latest, 'url': html_url}
-    except Exception as e:
-        print(f"[Update] Ошибка проверки: {e}")
-    return {'available': False}
-
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QLineEdit, QFileDialog, QProgressBar,
-    QListWidget, QFrame, QStackedWidget, QScrollArea,
-    QGraphicsDropShadowEffect, QMenu
+    QListWidget, QListWidgetItem, QFrame, QStackedWidget, QScrollArea,
+    QGraphicsDropShadowEffect, QMenu, QComboBox
 )
 from PySide6.QtCore import (
     Qt, QObject, Signal, QEvent, QPoint, QTimer,
@@ -53,6 +35,9 @@ import qasync
 from .server import FileTransferServer
 from .client import FileTransferClient
 from .qr_manager import QRCodeManager
+from .version import APP_VERSION, BUILD_DATE
+from .themes import ALL_THEMES, THEME_NAMES
+from .easter_eggs import check_easter_egg, get_unlocked_themes, get_progress, EASTER_EGGS
 
 if getattr(sys, 'frozen', False):
     APP_DIR = os.path.dirname(sys.executable)
@@ -61,9 +46,10 @@ else:
 
 PORT = 45000
 SETTINGS_FILE = os.path.join(APP_DIR, "settings.json")
-APP_VERSION = "v2.3.0"
 
-RUSTORE_URL = "https://www.rustore.ru/catalog/app/com.myname.socketflow"
+GITHUB_API = "https://api.github.com/repos/Nekeos/FileDrop/releases/latest"
+
+RUSTORE_URL = "https://www.rustore.ru/catalog/developer/ch7shq"
 GITHUB_URL = "https://github.com/Nekeos/FileDrop/releases"
 TELEGRAM_URL = "https://t.me/Axkuon"
 SITE_URL = "https://www.Axkuon.ru"
@@ -72,18 +58,13 @@ MAX_URL = "https://max.ru/channel_axkuon"
 
 
 def load_translations():
-    # 1. Frozen EXE — PyInstaller unpack dir
+    candidates = []
     if getattr(sys, 'frozen', False):
-        candidates = [
-            os.path.join(sys._MEIPASS, "translations.json"),
-            os.path.join(APP_DIR, "translations.json"),
-        ]
+        candidates.append(os.path.join(sys._MEIPASS, "translations.json"))
+        candidates.append(os.path.join(APP_DIR, "translations.json"))
     else:
-        # 2. Обычный запуск из исходников
-        candidates = [
-            os.path.join(APP_DIR, "translations.json"),
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "translations.json"),
-        ]
+        candidates.append(os.path.join(APP_DIR, "translations.json"))
+        candidates.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "translations.json"))
 
     for path in candidates:
         try:
@@ -91,215 +72,10 @@ def load_translations():
                 return json.load(f)
         except:
             continue
-
-    # Fallback — все языки пустые
-    return {lang: {} for lang in ["en", "ru", "de", "es", "jp", "ch", "kz"]}
+    return {"en": {}, "ru": {}}
 
 
 LANGUAGES = load_translations()
-
-
-# ============ STYLES ============
-
-LIGHT_STYLE = """
-QMainWindow { background-color: #FAFAFA; }
-QStackedWidget { background-color: #FAFAFA; }
-
-QLabel { color: #000000; background: transparent; }
-
-#sidebar { background-color: #FFFFFF; border-right: 1px solid #E5E5EA; }
-#logo { font-size: 18px; font-weight: bold; color: #000000; padding: 20px; background: transparent; }
-#version { font-size: 11px; color: #8E8E93; padding: 15px; background: transparent; }
-
-#sidebar QPushButton {
-    background-color: transparent; color: #3A3A3C; text-align: left;
-    padding: 12px 18px; font-size: 14px; border: none;
-    border-radius: 8px; margin: 2px 10px;
-}
-#sidebar QPushButton:hover { background-color: #F2F2F7; }
-#sidebar QPushButton:checked { background-color: #E8EFFF; color: #2563EB; font-weight: bold; }
-
-#card { background-color: #FFFFFF; border-radius: 12px; border: 1px solid #E5E5EA; }
-#card QLabel { color: #000000; background: transparent; }
-
-#page_title { font-size: 22px; font-weight: bold; color: #000000; background: transparent; }
-#subtitle { font-size: 13px; color: #8E8E93; background: transparent; }
-
-QLineEdit {
-    background-color: #FFFFFF; color: #000000; border: 1px solid #E5E5EA;
-    padding: 10px 14px; border-radius: 8px; font-size: 14px;
-}
-QLineEdit:focus { border: 1px solid #2563EB; }
-
-#primary_btn {
-    background-color: #2563EB; color: white; padding: 12px 20px;
-    border-radius: 8px; font-size: 14px; font-weight: bold; border: none;
-}
-#primary_btn:hover { background-color: #1D4ED8; }
-#primary_btn:disabled { background-color: #C7C7CC; color: white; }
-
-#secondary_btn {
-    background-color: #F2F2F7; color: #000000; padding: 10px 18px;
-    border-radius: 8px; font-size: 13px; border: none;
-}
-#secondary_btn:hover { background-color: #E5E5EA; }
-
-#selector_btn {
-    background-color: #F2F2F7; color: #000000; padding: 8px 16px;
-    border-radius: 8px; font-size: 13px; border: none; text-align: left;
-    min-width: 120px;
-}
-#selector_btn:hover { background-color: #E5E5EA; }
-
-#dropzone {
-    background-color: #FFFFFF; border: 2px dashed #C7C7CC;
-    border-radius: 12px; color: #8E8E93; font-size: 14px;
-}
-#dropzone_active {
-    background-color: #E8EFFF; border: 2px dashed #2563EB;
-    border-radius: 12px; color: #2563EB; font-size: 14px;
-}
-
-QProgressBar {
-    background-color: #E5E5EA; border: none; border-radius: 6px;
-    height: 8px; text-align: center; color: #000000;
-}
-QProgressBar::chunk { background-color: #2563EB; border-radius: 6px; }
-
-QListWidget {
-    background-color: transparent; border: none; color: #000000; font-size: 13px;
-}
-QListWidget::item { padding: 10px; border-radius: 6px; color: #000000; }
-QListWidget::item:hover { background-color: #F2F2F7; }
-QListWidget::item:selected { background-color: #E8EFFF; color: #2563EB; }
-
-QMenu {
-    background-color: #FFFFFF; color: #000000;
-    border: 1px solid #E5E5EA; border-radius: 8px; padding: 6px;
-}
-QMenu::item { padding: 8px 20px; border-radius: 6px; color: #000000; }
-QMenu::item:selected { background-color: #2563EB; color: #FFFFFF; }
-
-#status_ok { color: #10B981; font-size: 12px; font-weight: bold; background: transparent; }
-#status_bad { color: #8E8E93; font-size: 12px; background: transparent; }
-
-#community_btn {
-    background-color: #F2F2F7; color: #2563EB; padding: 10px 18px;
-    border-radius: 8px; font-size: 13px; font-weight: bold; border: none; margin: 10px;
-}
-#community_btn:hover { background-color: #E8EFFF; }
-
-#community_title { color: #000000; font-size: 17px; font-weight: bold; background: transparent; }
-#community_subtitle { color: #8E8E93; font-size: 12px; background: transparent; }
-
-QScrollArea { background: transparent; border: none; }
-QScrollArea > QWidget > QWidget { background: transparent; }
-QScrollBar:vertical { background: transparent; width: 8px; margin: 0; }
-QScrollBar::handle:vertical { background: #C7C7CC; border-radius: 4px; min-height: 30px; }
-QScrollBar::handle:vertical:hover { background: #8E8E93; }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
-"""
-
-DARK_STYLE = """
-QMainWindow { background-color: #0F0F0F; }
-QStackedWidget { background-color: #0F0F0F; }
-
-QLabel { color: #FFFFFF; background: transparent; }
-
-#sidebar { background-color: #1C1C1E; border-right: 1px solid #2C2C2E; }
-#logo { font-size: 18px; font-weight: bold; color: #FFFFFF; padding: 20px; background: transparent; }
-#version { font-size: 11px; color: #8E8E93; padding: 15px; background: transparent; }
-
-#sidebar QPushButton {
-    background-color: transparent; color: #C7C7CC; text-align: left;
-    padding: 12px 18px; font-size: 14px; border: none;
-    border-radius: 8px; margin: 2px 10px;
-}
-#sidebar QPushButton:hover { background-color: #2C2C2E; }
-#sidebar QPushButton:checked { background-color: #1E293B; color: #3B82F6; font-weight: bold; }
-
-#card { background-color: #1C1C1E; border-radius: 12px; border: 1px solid #2C2C2E; }
-#card QLabel { color: #FFFFFF; background: transparent; }
-
-#page_title { font-size: 22px; font-weight: bold; color: #FFFFFF; background: transparent; }
-#subtitle { font-size: 13px; color: #8E8E93; background: transparent; }
-
-QLineEdit {
-    background-color: #2C2C2E; color: #FFFFFF; border: 1px solid #3A3A3C;
-    padding: 10px 14px; border-radius: 8px; font-size: 14px;
-}
-QLineEdit:focus { border: 1px solid #3B82F6; }
-
-#primary_btn {
-    background-color: #2563EB; color: white; padding: 12px 20px;
-    border-radius: 8px; font-size: 14px; font-weight: bold; border: none;
-}
-#primary_btn:hover { background-color: #3B82F6; }
-#primary_btn:disabled { background-color: #3A3A3C; color: #8E8E93; }
-
-#secondary_btn {
-    background-color: #2C2C2E; color: #FFFFFF; padding: 10px 18px;
-    border-radius: 8px; font-size: 13px; border: none;
-}
-#secondary_btn:hover { background-color: #3A3A3C; }
-
-#selector_btn {
-    background-color: #2C2C2E; color: #FFFFFF; padding: 8px 16px;
-    border-radius: 8px; font-size: 13px; border: none; text-align: left;
-    min-width: 120px;
-}
-#selector_btn:hover { background-color: #3A3A3C; }
-
-#dropzone {
-    background-color: #1C1C1E; border: 2px dashed #3A3A3C;
-    border-radius: 12px; color: #8E8E93; font-size: 14px;
-}
-#dropzone_active {
-    background-color: #1E293B; border: 2px dashed #3B82F6;
-    border-radius: 12px; color: #3B82F6; font-size: 14px;
-}
-
-QProgressBar {
-    background-color: #2C2C2E; border: none; border-radius: 6px;
-    height: 8px; text-align: center; color: #FFFFFF;
-}
-QProgressBar::chunk { background-color: #2563EB; border-radius: 6px; }
-
-QListWidget {
-    background-color: transparent; border: none; color: #FFFFFF; font-size: 13px;
-}
-QListWidget::item { padding: 10px; border-radius: 6px; color: #FFFFFF; }
-QListWidget::item:hover { background-color: #2C2C2E; }
-QListWidget::item:selected { background-color: #1E293B; color: #3B82F6; }
-
-QMenu {
-    background-color: #2C2C2E; color: #FFFFFF;
-    border: 1px solid #3A3A3C; border-radius: 8px; padding: 6px;
-}
-QMenu::item { padding: 8px 20px; border-radius: 6px; color: #FFFFFF; }
-QMenu::item:selected { background-color: #2563EB; color: #FFFFFF; }
-
-#status_ok { color: #10B981; font-size: 12px; font-weight: bold; background: transparent; }
-#status_bad { color: #8E8E93; font-size: 12px; background: transparent; }
-
-#community_btn {
-    background-color: #2C2C2E; color: #3B82F6; padding: 10px 18px;
-    border-radius: 8px; font-size: 13px; font-weight: bold; border: none; margin: 10px;
-}
-#community_btn:hover { background-color: #1E293B; }
-
-#community_title { color: #FFFFFF; font-size: 17px; font-weight: bold; background: transparent; }
-#community_subtitle { color: #8E8E93; font-size: 12px; background: transparent; }
-
-QScrollArea { background: transparent; border: none; }
-QScrollArea > QWidget > QWidget { background: transparent; }
-QScrollBar:vertical { background: transparent; width: 8px; margin: 0; }
-QScrollBar::handle:vertical { background: #3A3A3C; border-radius: 4px; min-height: 30px; }
-QScrollBar::handle:vertical:hover { background: #8E8E93; }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
-"""
 
 
 def get_default_save_dir():
@@ -312,10 +88,15 @@ def load_settings():
     defaults = {
         "save_dir": get_default_save_dir(),
         "language": "system",
-        "theme": "light"
+        "theme": "light",
+        "unlocked_themes": [],
+        "saved_ips": [],
+        "last_ip": "",
+        "ask_save_ip": True,
+        "skip_update_notifications": False
     }
     try:
-        with open(SETTINGS_FILE, 'r', encoding="utf-8") as f:
+        with open(SETTINGS_FILE, 'r', encoding="utf-8-sig") as f:
             data = json.load(f)
             for k, v in defaults.items():
                 if k not in data:
@@ -331,19 +112,43 @@ def load_settings():
 
 def save_settings(s):
     with open(SETTINGS_FILE, 'w', encoding="utf-8") as f:
-        json.dump(s, f, indent=2)
+        json.dump(s, f, indent=2, ensure_ascii=False)
 
 
 def get_system_language():
     try:
-        if locale.getdefaultlocale()[0].startswith("ru"):
+        lang = locale.getlocale()[0] or ""
+        if lang.startswith("ru"):
             return "ru"
     except:
         pass
+    for var in ("LANG", "LC_ALL", "LC_MESSAGES"):
+        val = os.environ.get(var, "")
+        if val.startswith("ru"):
+            return "ru"
     return "en"
 
 
-# ============ TOAST ============
+def check_github_update(current_version):
+    try:
+        req = urllib.request.Request(GITHUB_API, headers={'User-Agent': 'FileDrop'})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            data = json.loads(r.read().decode())
+        tag = data.get('tag_name', '')
+        # Снимаем РОВНО одну ведущую 'v'/'V', чтобы не получить 'vv2.3.0'
+        latest = tag[1:] if tag[:1] in ('v', 'V') else tag
+        url = data.get('html_url', '')
+        current = current_version[1:] if current_version[:1] in ('v', 'V') else current_version
+        if latest and latest != current:
+            return latest, url
+    except Exception as e:
+        print(f"[Update] Ошибка проверки: {e}")
+    return None, None
+
+
+# ============================================
+# Toast
+# ============================================
 
 class Toast(QFrame):
     def __init__(self, parent, text, kind="info", duration=2500):
@@ -385,8 +190,12 @@ class Toast(QFrame):
         self.setGraphicsEffect(shadow)
 
         self.adjustSize()
+
+        existing = [t for t in parent.findChildren(Toast) if t is not self]
+        offset = sum(t.height() + 8 for t in existing)
+
         px = (parent.width() - self.width()) // 2
-        py = parent.height() - self.height() - 30
+        py = parent.height() - self.height() - 30 - offset
         self.move(px, py)
 
         QTimer.singleShot(duration, self.fade_out)
@@ -401,7 +210,41 @@ class Toast(QFrame):
         self._anim = anim
 
 
-# ============ SELECTOR BUTTON ============
+# ============================================
+# AutoGrowListWidget
+# ============================================
+
+class AutoGrowListWidget(QListWidget):
+    """Список, который увеличивает высоту по мере добавления элементов."""
+
+    def __init__(self, min_h=36, max_h=280, parent=None):
+        super().__init__(parent)
+        self._min_h = min_h
+        self._max_h = max_h
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setFixedHeight(min_h)
+        self.model().rowsInserted.connect(self._update_height)
+        self.model().rowsRemoved.connect(self._update_height)
+        self.model().modelReset.connect(self._update_height)
+
+    def _update_height(self, *args):
+        count = self.count()
+        if count == 0:
+            self.setFixedHeight(self._min_h)
+            return
+        row_h = self.sizeHintForRow(0)
+        if row_h <= 0:
+            row_h = 26
+        frame = 2 * self.frameWidth()
+        target = row_h * count + frame + 6
+        target = max(self._min_h, min(target, self._max_h))
+        self.setFixedHeight(target)
+
+
+# ============================================
+# SelectorButton
+# ============================================
 
 class SelectorButton(QPushButton):
     def __init__(self, options, current_value, on_change, parent=None):
@@ -439,7 +282,9 @@ class SelectorButton(QPushButton):
             self.on_change(value)
 
 
-# ============ DROP ZONE ============
+# ============================================
+# DropZone
+# ============================================
 
 class DropZone(QLabel):
     file_dropped = Signal(str)
@@ -480,25 +325,41 @@ class DropZone(QLabel):
                 self.file_dropped.emit(path)
 
 
-# ============ GLASS CARD ============
+# ============================================
+# IP ComboBox
+# ============================================
 
-def enhance_contrast(pixmap, factor=1.35):
-    """Sharpen the blurred backdrop by boosting contrast — pseudo-sharpening."""
-    img = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
-    w, h = img.width(), img.height()
-    for y in range(h):
-        for x in range(w):
-            c = img.pixelColor(x, y)
-            r = max(0, min(255, int((c.red() - 128) * factor + 128)))
-            g = max(0, min(255, int((c.green() - 128) * factor + 128)))
-            b = max(0, min(255, int((c.blue() - 128) * factor + 128)))
-            img.setPixelColor(x, y, QColor(r, g, b, c.alpha()))
-    return QPixmap.fromImage(img)
+class IPComboBox(QComboBox):
+    def __init__(self, saved_ips, parent=None):
+        super().__init__(parent)
+        self.setObjectName("ip_combo")
+        self.setEditable(True)
+        self.setInsertPolicy(QComboBox.NoInsert)
+        self.setMinimumHeight(44)
+        self.update_saved_ips(saved_ips)
 
+    def update_saved_ips(self, saved_ips):
+        current_text = self.currentText()
+        self.clear()
+        for ip in saved_ips:
+            self.addItem(ip)
+        self.setEditText(current_text)
+
+    def get_ip(self):
+        return self.currentText().strip()
+
+    def set_ip(self, ip):
+        self.setEditText(ip)
+
+
+
+
+
+# ============================================
+# Glass Community Sheet
+# ============================================
 
 class GlassCard(QFrame):
-    """Premium frosted glass — real blur + sharpened backdrop + rounded look."""
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self._is_dark = True
@@ -519,21 +380,9 @@ class GlassCard(QFrame):
         w, h = self.width(), self.height()
         if w <= 0 or h <= 0:
             return
-
-        # Stage 1: strong downscale (blur)
-        stage1 = screenshot.scaled(
-            max(1, w // 10), max(1, h // 10),
-            Qt.IgnoreAspectRatio, Qt.SmoothTransformation
-        )
-        # Stage 2: more blur
-        stage2 = stage1.scaled(
-            max(1, w // 30), max(1, h // 30),
-            Qt.IgnoreAspectRatio, Qt.SmoothTransformation
-        )
-        # Upscale back
-        self._blurred_bg = stage2.scaled(
-            w, h, Qt.IgnoreAspectRatio, Qt.SmoothTransformation
-        )
+        stage1 = screenshot.scaled(max(1, w // 8), max(1, h // 8), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        stage2 = stage1.scaled(max(1, w // 20), max(1, h // 20), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        self._blurred_bg = stage2.scaled(w, h, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
         self._cached_size = (w, h)
         self.update()
 
@@ -564,22 +413,18 @@ class GlassCard(QFrame):
         path.addRoundedRect(rect, radius, radius)
         painter.setClipPath(path)
 
-        # 1. Blurred background
         if self._blurred_bg is not None and not self._blurred_bg.isNull():
             painter.drawPixmap(0, 0, self._blurred_bg)
         else:
             fallback = QColor(22, 22, 26) if self._is_dark else QColor(248, 248, 252)
             painter.fillRect(rect, fallback)
 
-        # 2. Tint — differs for light/dark
         if self._is_dark:
-            tint = QColor(18, 18, 24, 175)
+            tint = QColor(18, 18, 24, 155)
         else:
-            # Light theme: soft white veil so text stays readable
-            tint = QColor(255, 255, 255, 200)
+            tint = QColor(252, 252, 255, 165)
         painter.fillRect(rect, tint)
 
-        # 3. Diagonal sheen — softer in light
         diag = QLinearGradient(rect.topLeft(), rect.bottomRight())
         if self._is_dark:
             diag.setColorAt(0.0, QColor(120, 150, 255, 35))
@@ -587,12 +432,11 @@ class GlassCard(QFrame):
             diag.setColorAt(0.65, QColor(255, 200, 220, 10))
             diag.setColorAt(1.0, QColor(180, 140, 255, 30))
         else:
-            diag.setColorAt(0.0, QColor(210, 225, 255, 60))
-            diag.setColorAt(0.5, QColor(255, 255, 255, 20))
-            diag.setColorAt(1.0, QColor(240, 220, 255, 50))
+            diag.setColorAt(0.0, QColor(220, 230, 255, 120))
+            diag.setColorAt(0.5, QColor(255, 255, 255, 60))
+            diag.setColorAt(1.0, QColor(255, 230, 240, 100))
         painter.fillRect(rect, diag)
 
-        # 4. Radial soft light
         radial = QRadialGradient(
             rect.left() + rect.width() * 0.3,
             rect.top() + rect.height() * 0.05,
@@ -602,16 +446,14 @@ class GlassCard(QFrame):
             radial.setColorAt(0.0, QColor(255, 255, 255, 22))
             radial.setColorAt(1.0, QColor(255, 255, 255, 0))
         else:
-            radial.setColorAt(0.0, QColor(255, 255, 255, 160))
+            radial.setColorAt(0.0, QColor(255, 255, 255, 220))
             radial.setColorAt(1.0, QColor(255, 255, 255, 0))
         painter.fillRect(rect, radial)
 
-        # 5. Grain
         self._ensure_grain()
         if self._grain:
             painter.drawPixmap(0, 0, self._grain)
 
-        # 6. Top bloom
         bloom = QLinearGradient(0, rect.top(), 0, rect.top() + 80)
         if self._is_dark:
             bloom.setColorAt(0, QColor(255, 255, 255, 90))
@@ -619,36 +461,27 @@ class GlassCard(QFrame):
             bloom.setColorAt(1, QColor(255, 255, 255, 0))
         else:
             bloom.setColorAt(0, QColor(255, 255, 255, 255))
-            bloom.setColorAt(0.4, QColor(255, 255, 255, 180))
+            bloom.setColorAt(0.4, QColor(255, 255, 255, 160))
             bloom.setColorAt(1, QColor(255, 255, 255, 0))
         painter.fillRect(rect.left(), rect.top(), rect.width(), 80, bloom)
 
-        # 7. Bottom shadow
         bot = QLinearGradient(0, rect.bottom() - 90, 0, rect.bottom())
         bot.setColorAt(0, QColor(0, 0, 0, 0))
-        bot.setColorAt(1, QColor(0, 0, 0, 80 if self._is_dark else 30))
+        bot.setColorAt(1, QColor(0, 0, 0, 80 if self._is_dark else 25))
         painter.fillRect(rect.left(), rect.bottom() - 90, rect.width(), 90, bot)
 
         painter.end()
 
-        # 8. Border
         painter2 = QPainter(self)
         painter2.setRenderHint(QPainter.Antialiasing)
         painter2.setBrush(Qt.NoBrush)
-
-        if self._is_dark:
-            border = QColor(255, 255, 255, 60)
-        else:
-            border = QColor(0, 0, 0, 35)
+        border = QColor(255, 255, 255, 60) if self._is_dark else QColor(0, 0, 0, 40)
         pen = QPen(border)
         pen.setWidth(1)
         painter2.setPen(pen)
         painter2.drawRoundedRect(rect, radius, radius)
-
         painter2.end()
 
-
-# ============ COMMUNITY SHEET ============
 
 class CommunitySheet(QFrame):
     def __init__(self, tr, parent=None):
@@ -663,32 +496,24 @@ class CommunitySheet(QFrame):
         outer.setSpacing(0)
 
         self.glass = GlassCard(self)
-
         shadow = QGraphicsDropShadowEffect(self.glass)
         shadow.setBlurRadius(80)
         shadow.setColor(QColor(0, 0, 0, 180))
         shadow.setOffset(0, -14)
         self.glass.setGraphicsEffect(shadow)
-
         outer.addWidget(self.glass)
 
-        # Content
         layout = QVBoxLayout(self.glass)
         layout.setContentsMargins(28, 16, 28, 24)
         layout.setSpacing(10)
 
-        # Clickable handle (closes sheet)
         handle_wrap = QHBoxLayout()
         handle_wrap.setContentsMargins(0, 0, 0, 0)
         handle_wrap.addStretch()
         self.handle = QPushButton()
         self.handle.setFixedSize(52, 16)
         self.handle.setCursor(Qt.PointingHandCursor)
-        self.handle.setToolTip(self.tr.get("close", "Close"))
-        self.handle.setStyleSheet("""
-            QPushButton { background: transparent; border: none; }
-            QPushButton:hover QFrame { background-color: rgba(180, 180, 185, 230); }
-        """)
+        self.handle.setStyleSheet("QPushButton { background: transparent; border: none; }")
         self.handle_bar = QFrame(self.handle)
         self.handle_bar.setGeometry(0, 5, 52, 5)
         self.handle_bar.setStyleSheet("background-color: rgba(142, 142, 147, 200); border-radius: 2px;")
@@ -698,21 +523,17 @@ class CommunitySheet(QFrame):
         layout.addLayout(handle_wrap)
         layout.addSpacing(4)
 
-        # Title
         title_block = QVBoxLayout()
         title_block.setSpacing(2)
         title = QLabel(self.tr.get("community_title", "Axkuon Community"))
         title.setObjectName("community_title")
         title_block.addWidget(title)
-
         subtitle = QLabel(self.tr.get("community_subtitle", "Follow us on socials"))
         subtitle.setObjectName("community_subtitle")
         title_block.addWidget(subtitle)
-
         layout.addLayout(title_block)
         layout.addSpacing(10)
 
-        # Links
         links = [
             ("🌐", self.tr.get("link_site", "Website"), SITE_URL, "#3B82F6"),
             ("✈️", "Telegram", TELEGRAM_URL, "#229ED9"),
@@ -745,22 +566,12 @@ class CommunitySheet(QFrame):
                     border: 1px solid rgba({r}, {g}, {b}, 0.5);
                     border-left: 4px solid {color};
                 }}
-                QPushButton:pressed {{
-                    background-color: rgba({r}, {g}, {b}, 0.28);
-                }}
-                QPushButton:disabled {{
-                    color: rgba(255, 255, 255, 0.3);
-                    border-left: 4px solid rgba(255, 255, 255, 0.1);
-                }}
             """)
             if url != "#":
                 btn.clicked.connect(lambda _, u=url: webbrowser.open(u))
-            else:
-                btn.setEnabled(False)
-                btn.setToolTip(self.tr.get("soon", "Soon"))
             layout.addWidget(btn)
 
-        layout.addStretch()
+        layout.addSpacing(6)
 
         close_btn = QPushButton(self.tr.get("close", "Close"))
         close_btn.setObjectName("primary_btn")
@@ -771,29 +582,19 @@ class CommunitySheet(QFrame):
 
     def set_dark(self, is_dark):
         self.glass.set_dark(is_dark)
-        # Switch link button text color for light theme
-        for btn in self.glass.findChildren(QPushButton):
-            if btn.objectName() == "" and btn.minimumHeight() == 52:
-                if is_dark:
-                    btn.setStyleSheet(btn.styleSheet().replace("color: #1C1C1E;", "color: #FFFFFF;"))
-                else:
-                    btn.setStyleSheet(btn.styleSheet().replace("color: #FFFFFF;", "color: #1C1C1E;"))
 
     def show_with_animation(self):
         parent = self.parent()
         target_y = parent.height() - self.height()
-
         self.move(self.x(), parent.height())
         self.show()
         self.raise_()
         QApplication.processEvents()
-
         pixmap = parent.grab()
         if not pixmap.isNull():
             sheet_rect = self.geometry()
             cropped = pixmap.copy(sheet_rect)
             self.glass.update_background(cropped)
-
         self.anim = QPropertyAnimation(self, b"pos")
         self.anim.setDuration(280)
         self.anim.setStartValue(QPoint(self.x(), parent.height()))
@@ -821,14 +622,195 @@ class CommunitySheet(QFrame):
         self.anim.finished.connect(self.hide)
         self.anim.start()
 
-    def showEvent(self, event):
-        super().showEvent(event)
+
+# ============================================
+# OverlayCard — универсальное крупное уведомление
+# ============================================
+
+class OverlayCard(QFrame):
+    """Крупное модальное уведомление поверх окна."""
+    closed = Signal()
+    action_clicked = Signal()
+    dismiss_clicked = Signal()
+    choice_made = Signal(str)   # <-- новое: "action" | "cancel" | "dismiss"
+
+    def __init__(self, config, tr, parent=None):
+        super().__init__(parent)
+        self.tr = tr
+        self.config = config
+        self._action_callback = None
+        self._dismiss_callback = None
+
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setStyleSheet("OverlayCard { background-color: rgba(0, 0, 0, 180); }")
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addStretch()
+
+        card = QFrame()
+        card.setFixedSize(460, 440 if config.get('dismiss') else 400)
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {config['bg']};
+                border-radius: 20px;
+                border: 2px solid {config['accent']};
+            }}
+            QFrame QLabel {{
+                background: transparent;
+            }}
+        """)
+
+        shadow = QGraphicsDropShadowEffect(card)
+        shadow.setBlurRadius(60)
+        shadow.setColor(QColor(config['accent']))
+        shadow.setOffset(0, 0)
+        card.setGraphicsEffect(shadow)
+
+        cl = QVBoxLayout(card)
+        cl.setContentsMargins(40, 35, 40, 30)
+        cl.setSpacing(14)
+
+        icon_lbl = QLabel(config.get('icon', '✨'))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        icon_lbl.setStyleSheet(
+            f"color: {config['accent']}; font-size: 72px; font-weight: bold; background: transparent;"
+        )
+        cl.addWidget(icon_lbl)
+
+        if config.get('label'):
+            small = QLabel(config['label'].upper())
+            small.setAlignment(Qt.AlignCenter)
+            small.setStyleSheet(
+                f"color: {config['accent']}; font-size: 11px; font-weight: bold; "
+                f"letter-spacing: 4px; background: transparent;"
+            )
+            cl.addWidget(small)
+
+        title = QLabel(config.get('title', ''))
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet(
+            f"color: {config['accent']}; font-size: 28px; font-weight: 900; "
+            f"letter-spacing: 2px; background: transparent;"
+        )
+        cl.addWidget(title)
+
+        cl.addSpacing(10)
+
+        if config.get('message'):
+            quote = QLabel(f"«{config['message']}»")
+            quote.setAlignment(Qt.AlignCenter)
+            quote.setWordWrap(True)
+            quote.setStyleSheet(
+                f"color: {config['text']}; font-size: 13px; font-style: italic; background: transparent;"
+            )
+            cl.addWidget(quote)
+
+        cl.addStretch()
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+
+        if config.get('action'):
+            apply_btn = QPushButton(config['action'])
+            apply_btn.setMinimumHeight(46)
+            apply_btn.setCursor(Qt.PointingHandCursor)
+            apply_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {config['accent']};
+                    color: {config['bg']};
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    padding: 12px 20px;
+                }}
+            """)
+            apply_btn.clicked.connect(self._on_action)
+            btn_row.addWidget(apply_btn)
+
+        if config.get('cancel'):
+            later_btn = QPushButton(config['cancel'])
+            later_btn.setMinimumHeight(46)
+            later_btn.setCursor(Qt.PointingHandCursor)
+            later_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: transparent;
+                    color: {config['text']};
+                    border: 1px solid {config['text']};
+                    border-radius: 8px;
+                    font-size: 14px;
+                    padding: 12px 20px;
+                }}
+                QPushButton:hover {{
+                    border-color: {config['accent']};
+                    color: {config['accent']};
+                }}
+            """)
+            later_btn.clicked.connect(self._on_cancel)
+            btn_row.addWidget(later_btn)
+
+        cl.addLayout(btn_row)
+
+        if config.get('dismiss'):
+            dismiss_btn = QPushButton(config['dismiss'])
+            dismiss_btn.setMinimumHeight(38)
+            dismiss_btn.setCursor(Qt.PointingHandCursor)
+            dismiss_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: transparent;
+                    color: {config['text']};
+                    border: none;
+                    font-size: 12px;
+                    padding: 6px 12px;
+                    text-decoration: underline;
+                }}
+                QPushButton:hover {{
+                    color: {config['accent']};
+                }}
+            """)
+            dismiss_btn.clicked.connect(self._on_dismiss)
+            cl.addWidget(dismiss_btn)
+
+        outer.addWidget(card, alignment=Qt.AlignCenter)
+        outer.addStretch()
+
+    def set_action_callback(self, cb):
+        self._action_callback = cb
+
+    def set_dismiss_callback(self, cb):
+        self._dismiss_callback = cb
+
+    def _on_action(self):
+        self.choice_made.emit("action")
+        self.action_clicked.emit()
+        if self._action_callback:
+            self._action_callback()
+        self._close()
+
+    def _on_dismiss(self):
+        self.choice_made.emit("dismiss")
+        self.dismiss_clicked.emit()
+        if self._dismiss_callback:
+            self._dismiss_callback()
+        self._close()
+
+    def _on_cancel(self):
+        self.choice_made.emit("cancel")
+        self._close()
+
+    def _close(self):
+        self.closed.emit()
+        self.hide()
+        self.deleteLater()
 
 
-# ============ SIGNALS ============
+# ============================================
+# Signals
+# ============================================
 
 class ServerSignals(QObject):
-    file_received = Signal(str)
+    file_received = Signal(str, int)
 
 
 class ClientSignals(QObject):
@@ -836,7 +818,9 @@ class ClientSignals(QObject):
     transfer_complete = Signal(bool, str)
 
 
-# ============ MAIN WINDOW ============
+# ============================================
+# MainWindow
+# ============================================
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -862,7 +846,7 @@ class MainWindow(QMainWindow):
         self.server = FileTransferServer(save_dir=self.save_dir, port=PORT)
         self.server_signals = ServerSignals()
         self.server_signals.file_received.connect(self.on_file_received)
-        self.server.on_file_received = lambda fn: self.server_signals.file_received.emit(fn)
+        self.server.on_file_received = lambda fn, sz: self.server_signals.file_received.emit(fn, sz)
 
         self.client_signals = ClientSignals()
         self.client_signals.progress_update.connect(self.on_progress)
@@ -870,10 +854,12 @@ class MainWindow(QMainWindow):
 
         self.selected_file = None
         self.received_files = []
+        self._pending_send_ip = None
 
         self.init_ui()
         self.apply_theme()
         asyncio.ensure_future(self.start_server())
+        asyncio.ensure_future(self._check_update_async())
 
     def init_ui(self):
         central = QWidget()
@@ -964,13 +950,22 @@ class MainWindow(QMainWindow):
     def show_community(self):
         cw = self.centralWidget().width()
         self.community.setFixedWidth(cw)
-        self.community.set_dark(self.settings.get("theme") == "dark")
+        theme = self.settings.get("theme", "light")
+        self.community.set_dark(theme in ("dark", "halflife", "cyberpunk", "orwell", "console", "axkuon"))
         self.community.show_with_animation()
 
     def switch_page(self, index):
+        if index == 2:
+            old_page = self.stack.widget(2)
+            self.stack.removeWidget(old_page)
+            old_page.deleteLater()
+            self.stack.insertWidget(2, self._wrap_scroll(self.build_settings_page()))
+
         self.stack.setCurrentIndex(index)
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
+
+    # ============ SEND PAGE ============
 
     def build_send_page(self):
         page = QWidget()
@@ -997,9 +992,9 @@ class MainWindow(QMainWindow):
 
         ip_row = QHBoxLayout()
         ip_row.setSpacing(10)
-        self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText("192.168.1.5")
-        self.ip_input.setMinimumHeight(44)
+
+        self.ip_input = IPComboBox(self.settings.get("saved_ips", []))
+        self.ip_input.set_ip(self.settings.get("last_ip", ""))
         ip_row.addWidget(self.ip_input, stretch=1)
         layout.addLayout(ip_row)
 
@@ -1033,6 +1028,8 @@ class MainWindow(QMainWindow):
         self.dropzone.setText(f"📄\n\n{name}")
         self.send_btn.setEnabled(True)
 
+    # ============ RECEIVE PAGE ============
+
     def build_receive_page(self):
         page = QWidget()
         layout = QVBoxLayout(page)
@@ -1048,6 +1045,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(sub)
         layout.addSpacing(10)
 
+        # Статус
         status_card = QFrame()
         status_card.setObjectName("card")
         sc = QHBoxLayout(status_card)
@@ -1063,10 +1061,12 @@ class MainWindow(QMainWindow):
         sc.addWidget(self.ip_label)
         layout.addWidget(status_card)
 
+        # QR
         qr_card = QFrame()
         qr_card.setObjectName("card")
         qc = QVBoxLayout(qr_card)
         qc.setContentsMargins(20, 20, 20, 20)
+        qc.setSpacing(10)
 
         qr_title = QLabel(self.tr.get("qr_for_connection", "QR-code for connection"))
         qr_title.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -1083,22 +1083,61 @@ class MainWindow(QMainWindow):
         qc.addWidget(self.qr_info)
         layout.addWidget(qr_card)
 
+        # Контейнер для полученных файлов — скрыт, пока файлов нет
+        self.received_section = QWidget()
+        rs_layout = QVBoxLayout(self.received_section)
+        rs_layout.setContentsMargins(0, 0, 0, 0)
+        rs_layout.setSpacing(10)
+
+        files_header = QHBoxLayout()
         files_title = QLabel(self.tr.get("received_files", "Received files"))
         files_title.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(files_title)
+        files_header.addWidget(files_title)
+        files_header.addStretch()
 
-        self.received_list = QListWidget()
-        self.received_list.setMinimumHeight(150)
-        layout.addWidget(self.received_list)
+        self.clear_files_btn = QPushButton("🗑  " + self.tr.get("clear", "Clear"))
+        self.clear_files_btn.setObjectName("secondary_btn")
+        self.clear_files_btn.setCursor(Qt.PointingHandCursor)
+        self.clear_files_btn.clicked.connect(self.clear_received_files)
+        files_header.addWidget(self.clear_files_btn)
+        rs_layout.addLayout(files_header)
+
+        self.received_list = AutoGrowListWidget(min_h=36, max_h=280)
+        rs_layout.addWidget(self.received_list)
+
+        layout.addWidget(self.received_section)
+        self.received_section.setVisible(False)
 
         open_btn = QPushButton("📂   " + self.tr.get("open_folder", "Open folder"))
         open_btn.setObjectName("secondary_btn")
         open_btn.setCursor(Qt.PointingHandCursor)
+        open_btn.setMinimumHeight(44)
         open_btn.clicked.connect(self.open_folder)
         layout.addWidget(open_btn)
 
         layout.addStretch()
         return page
+
+    def clear_received_files(self):
+        self.received_files.clear()
+        self.received_list.clear()
+        self.received_section.setVisible(False)
+        self.toast(self.tr.get("cleared", "Cleared"), "success", 2000)
+
+    # ============ SETTINGS PAGE ============
+
+    def _build_theme_options(self):
+        opts = [
+            (self.tr.get("theme_light", "Light"), "light"),
+            (self.tr.get("theme_dark", "Dark"), "dark"),
+            (self.tr.get("theme_console", "Console"), "console"),
+            (self.tr.get("theme_axkuon", "AxKuon"), "axkuon"),
+        ]
+        unlocked = get_unlocked_themes(SETTINGS_FILE)
+        for key in ["halflife", "cyberpunk", "fahrenheit", "orwell"]:
+            if key in unlocked:
+                opts.append((THEME_NAMES[key], key))
+        return opts
 
     def build_settings_page(self):
         page = QWidget()
@@ -1120,10 +1159,7 @@ class MainWindow(QMainWindow):
         tc.addWidget(lbl)
         tc.addStretch()
 
-        theme_options = [
-            (self.tr.get("theme_light", "Light"), "light"),
-            (self.tr.get("theme_dark", "Dark"), "dark"),
-        ]
+        theme_options = self._build_theme_options()
         self.theme_selector = SelectorButton(theme_options, self.settings.get("theme", "light"), self.change_theme)
         tc.addWidget(self.theme_selector)
         layout.addWidget(theme_card)
@@ -1170,6 +1206,30 @@ class MainWindow(QMainWindow):
         fc.addWidget(change_btn)
         layout.addWidget(folder_card)
 
+        self.build_saved_ips_card(layout)
+
+        found, total = get_progress(SETTINGS_FILE)
+        eggs_card = QFrame()
+        eggs_card.setObjectName("card")
+        ec = QVBoxLayout(eggs_card)
+        ec.setContentsMargins(20, 15, 20, 15)
+
+        eggs_label = QLabel(f"🏆 {self.tr.get('easter_eggs', 'Easter eggs')}: {found} / {total}")
+        eggs_label.setStyleSheet("font-weight: bold;")
+        ec.addWidget(eggs_label)
+
+        if found > 0:
+            unlocked = get_unlocked_themes(SETTINGS_FILE)
+            names = ", ".join([THEME_NAMES.get(k, k) for k in unlocked])
+            ec.addWidget(QLabel(f"{self.tr.get('unlocked', 'Unlocked')}: {names}"))
+        else:
+            hint = QLabel(self.tr.get("easter_eggs_hint", "Send a file with a special size or name to unlock a hidden theme"))
+            hint.setObjectName("subtitle")
+            hint.setWordWrap(True)
+            ec.addWidget(hint)
+
+        layout.addWidget(eggs_card)
+
         about_title = QLabel(self.tr.get("about", "About"))
         about_title.setStyleSheet("font-weight: bold; font-size: 14px;")
         layout.addWidget(about_title)
@@ -1185,16 +1245,114 @@ class MainWindow(QMainWindow):
         layout.addStretch()
         return page
 
+    def build_saved_ips_card(self, parent_layout):
+        card = QFrame()
+        card.setObjectName("card")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(20, 15, 20, 15)
+        layout.setSpacing(10)
+
+        header = QHBoxLayout()
+        lbl = QLabel("🌐   " + self.tr.get("saved_ips", "Saved IPs"))
+        lbl.setStyleSheet("font-weight: bold;")
+        header.addWidget(lbl)
+        header.addStretch()
+
+        self.ask_ip_checkbox = QPushButton()
+        self.ask_ip_checkbox.setCheckable(True)
+        self.ask_ip_checkbox.setChecked(self.settings.get("ask_save_ip", True))
+        self.ask_ip_checkbox.setCursor(Qt.PointingHandCursor)
+        self._update_ask_ip_button()
+        self.ask_ip_checkbox.clicked.connect(self.toggle_ask_save_ip)
+        header.addWidget(self.ask_ip_checkbox)
+
+        layout.addLayout(header)
+
+        saved = self.settings.get("saved_ips", [])
+        self.saved_ips_list = QListWidget()
+        self.saved_ips_list.setMinimumHeight(80)
+        self.saved_ips_list.setMaximumHeight(160)
+
+        if not saved:
+            item = QListWidgetItem(self.tr.get("no_saved_ips", "No saved IPs"))
+            item.setFlags(Qt.NoItemFlags)
+            self.saved_ips_list.addItem(item)
+        else:
+            for ip in saved:
+                self.saved_ips_list.addItem(ip)
+
+        layout.addWidget(self.saved_ips_list)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+
+        delete_btn = QPushButton(self.tr.get("delete_selected", "Delete selected"))
+        delete_btn.setObjectName("secondary_btn")
+        delete_btn.setCursor(Qt.PointingHandCursor)
+        delete_btn.clicked.connect(self.delete_selected_ip)
+        btn_row.addWidget(delete_btn)
+
+        clear_btn = QPushButton(self.tr.get("clear_all", "Clear all"))
+        clear_btn.setObjectName("secondary_btn")
+        clear_btn.setCursor(Qt.PointingHandCursor)
+        clear_btn.clicked.connect(self.clear_all_ips)
+        btn_row.addWidget(clear_btn)
+
+        btn_row.addStretch()
+        layout.addLayout(btn_row)
+
+        parent_layout.addWidget(card)
+
+    def _update_ask_ip_button(self):
+        if self.settings.get("ask_save_ip", True):
+            self.ask_ip_checkbox.setText("✓ " + self.tr.get("ask_save_ip", "Ask on new IP"))
+        else:
+            self.ask_ip_checkbox.setText("✗ " + self.tr.get("ask_save_ip", "Ask on new IP"))
+
+    def toggle_ask_save_ip(self):
+        new_val = not self.settings.get("ask_save_ip", True)
+        self.settings["ask_save_ip"] = new_val
+        save_settings(self.settings)
+        self._update_ask_ip_button()
+        state = self.tr.get("enabled", "Enabled") if new_val else self.tr.get("disabled", "Disabled")
+        self.toast(f"{self.tr.get('ask_save_ip', 'Ask on new IP')}: {state}", "info", 2000)
+
+    def delete_selected_ip(self):
+        item = self.saved_ips_list.currentItem()
+        if not item or not (item.flags() & Qt.ItemIsSelectable):
+            self.toast(self.tr.get("nothing_selected", "Nothing selected"), "error", 2000)
+            return
+        ip = item.text()
+        saved = self.settings.get("saved_ips", [])
+        if ip in saved:
+            saved.remove(ip)
+            self.settings["saved_ips"] = saved
+            save_settings(self.settings)
+            self.saved_ips_list.takeItem(self.saved_ips_list.row(item))
+            self.ip_input.update_saved_ips(saved)
+            self.toast(f"{self.tr.get('deleted', 'Deleted')}: {ip}", "success", 2000)
+
+    def clear_all_ips(self):
+        self.settings["saved_ips"] = []
+        save_settings(self.settings)
+        self.saved_ips_list.clear()
+        item = QListWidgetItem(self.tr.get("no_saved_ips", "No saved IPs"))
+        item.setFlags(Qt.NoItemFlags)
+        self.saved_ips_list.addItem(item)
+        self.ip_input.update_saved_ips([])
+        self.toast(self.tr.get("cleared", "Cleared"), "success", 2000)
+
+    # ============ ACTIONS ============
+
     def change_theme(self, value):
         self.settings["theme"] = value
         save_settings(self.settings)
         self.apply_theme()
 
     def apply_theme(self):
-        if self.settings.get("theme", "light") == "dark":
-            self.setStyleSheet(DARK_STYLE)
-        else:
-            self.setStyleSheet(LIGHT_STYLE)
+        theme = self.settings.get("theme", "light")
+        style = ALL_THEMES.get(theme, ALL_THEMES["light"])
+        self.setStyleSheet(style)
 
     def change_language(self, value):
         self.settings["language"] = value
@@ -1225,18 +1383,96 @@ class MainWindow(QMainWindow):
         self.qr_display.setPixmap(pixmap)
         self.qr_info.setText(f"{info['ip']}:{PORT}")
 
-    def on_file_received(self, fn):
+    async def _check_update_async(self):
+        if self.settings.get("skip_update_notifications", False):
+            return
+        loop = asyncio.get_event_loop()
+        latest, url = await loop.run_in_executor(None, check_github_update, APP_VERSION)
+        if latest and url:
+            self.show_update_notification(latest, url)
+
+    def on_file_received(self, fn, size):
         self.received_files.append(fn)
+        if not self.received_section.isVisible():
+            self.received_section.setVisible(True)
         self.received_list.addItem(f"📄   {fn}")
         self.toast(f"📥 {fn}", "success", 3000)
+
+        egg, updated_settings = check_easter_egg(fn, size, SETTINGS_FILE)
+        if egg:
+            self.settings = updated_settings
+            self.show_easter_egg(egg)
+
+    # ============ SEND ============
 
     def send_file(self):
         if not self.selected_file:
             return
-        ip = self.ip_input.text().strip()
+        ip = self.ip_input.get_ip()
         if not ip:
             self.toast(self.tr.get("enter_ip", "Enter IP address"), "error")
             return
+
+        if self.settings.get("ask_save_ip", True):
+            saved = self.settings.get("saved_ips", [])
+            if ip not in saved:
+                self._pending_send_ip = ip
+                self._show_save_ip_overlay(ip)
+                return  # <-- ждём выбор пользователя
+            else:
+                self.settings["last_ip"] = ip
+                save_settings(self.settings)
+        else:
+            self.settings["last_ip"] = ip
+            save_settings(self.settings)
+
+        self._start_send(ip)
+
+    def _show_save_ip_overlay(self, ip):
+        meta = self._theme_overlay_meta()
+        config = {
+            "icon":    "💾",
+            "label":   self.tr.get("save_ip_label", "NEW IP"),
+            "title":   self.tr.get("save_ip_title", "Save IP?"),
+            "message": self.tr.get("save_ip_msg", "Save IP {ip} for quick access?").format(ip=ip),
+            "accent":  meta["accent"],
+            "bg":      meta["bg"],
+            "text":    meta["text"],
+            "action":  self.tr.get("save", "Save"),
+            "cancel":  self.tr.get("dont_save", "Don't save"),
+            "dismiss": self.tr.get("never_ask", "Don't ask again"),
+        }
+
+        overlay = OverlayCard(config, self.tr, self.centralWidget())
+        overlay.setGeometry(self.centralWidget().rect())
+        overlay.choice_made.connect(lambda choice: self._on_save_ip_choice(choice, ip))
+        overlay.show()
+        overlay.raise_()
+
+    def _on_save_ip_choice(self, choice, ip):
+        saved = self.settings.get("saved_ips", [])
+        if choice == "action":  # Save
+            if ip not in saved:
+                saved.append(ip)
+            self.settings["saved_ips"] = saved
+            self.settings["last_ip"] = ip
+            save_settings(self.settings)
+            self.ip_input.update_saved_ips(saved)
+            self.ip_input.set_ip(ip)
+            self.toast(self.tr.get("ip_saved", "IP saved"), "success", 2000)
+            self._start_send(ip)
+        elif choice == "cancel":  # Don't save, but still send
+            self.settings["last_ip"] = ip
+            save_settings(self.settings)
+            self._start_send(ip)
+        elif choice == "dismiss":  # Never ask again + send
+            self.settings["last_ip"] = ip
+            self.settings["ask_save_ip"] = False
+            save_settings(self.settings)
+            self._update_ask_ip_button()
+            self._start_send(ip)
+
+    def _start_send(self, ip):
         self.send_btn.setEnabled(False)
         self.progress.setVisible(True)
         self.progress.setValue(0)
@@ -1253,6 +1489,14 @@ class MainWindow(QMainWindow):
                 self.selected_file,
                 progress_callback=lambda s, t: self.client_signals.progress_update.emit(s, t)
             )
+
+            file_name = os.path.basename(self.selected_file)
+            file_size = os.path.getsize(self.selected_file)
+            egg, updated_settings = check_easter_egg(file_name, file_size, SETTINGS_FILE)
+            if egg:
+                self.settings = updated_settings
+                self.show_easter_egg(egg)
+
             self.client_signals.transfer_complete.emit(True, self.tr.get("success_sent", "File sent!"))
         except Exception as e:
             self.client_signals.transfer_complete.emit(False, str(e))
@@ -1271,6 +1515,115 @@ class MainWindow(QMainWindow):
         else:
             self.toast(msg, "error", 4000)
         self.progress_label.setText(msg)
+
+    # ============ OVERLAYS ============
+
+    def _show_overlay(self, config, on_action=None, on_closed=None, on_dismiss=None):
+        overlay = OverlayCard(config, self.tr, self.centralWidget())
+        if on_action:
+            overlay.set_action_callback(on_action)
+        if on_closed:
+            overlay.closed.connect(on_closed)
+        if on_dismiss:
+            overlay.set_dismiss_callback(on_dismiss)
+        overlay.setGeometry(self.centralWidget().rect())
+        overlay.show()
+        overlay.raise_()
+        return overlay
+
+    def show_easter_egg(self, egg):
+        theme_key = egg['theme']
+        icons = {
+            "halflife":   "λ",
+            "cyberpunk":  "◢",
+            "fahrenheit": "🔥",
+            "orwell":     "👁",
+        }
+        # Палитра — та, что соответствует самой пасхалке (её же и открываем)
+        palette = {
+            "halflife":   {"accent": "#ff9900", "bg": "#1a1a1a", "text": "#e8e4dc"},
+            "cyberpunk":  {"accent": "#fcee0a", "bg": "#0a0a12", "text": "#00f0ff"},
+            "fahrenheit": {"accent": "#ff5500", "bg": "#1a0d08", "text": "#ffd9c0"},
+            "orwell":     {"accent": "#cccccc", "bg": "#0d0d0d", "text": "#8a8a8a"},
+        }.get(theme_key, {"accent": "#a78bfa", "bg": "#1a1a1a", "text": "#e0e0e0"})
+
+        config = {
+            "icon":    icons.get(theme_key, "🎉"),
+            "label":   self.tr.get("theme_unlocked", "THEME UNLOCKED"),
+            "title":   egg['title'],
+            "message": egg['message'],
+            "accent":  palette['accent'],
+            "bg":      palette['bg'],
+            "text":    palette['text'],
+            "action":  self.tr.get("apply_theme", "Apply theme"),
+            "cancel":  self.tr.get("later", "Later"),
+        }
+
+        self._show_overlay(
+            config,
+            on_action=lambda: self._apply_egg_theme(theme_key),
+            on_closed=self._refresh_theme_options
+        )
+
+    def show_update_notification(self, latest, url):
+        meta = self._theme_overlay_meta()
+        config = {
+            "icon":     "🚀",
+            "label":    self.tr.get("update_available", "UPDATE AVAILABLE"),
+            "title":    latest,
+            "message":  self.tr.get("update_message", "Новая версия уже доступна. Открыть страницу релиза?"),
+            "accent":   meta["accent"],
+            "bg":       meta["bg"],
+            "text":     meta["text"],
+            "action":   self.tr.get("download", "Скачать"),
+            "cancel":   self.tr.get("later", "Позже"),
+            "dismiss":  self.tr.get("never_ask_update", "Больше не спрашивать"),
+        }
+
+        self._show_overlay(
+            config,
+            on_action=lambda: webbrowser.open(url),
+            on_dismiss=self._disable_update_notifications,
+        )
+
+    def _theme_overlay_meta(self):
+        """Возвращает accent/bg/text под текущую тему.
+        Используется и в пасхалках, и в уведомлении об обновлении.
+        """
+        theme = self.settings.get("theme", "light")
+        palette = {
+            "light":      {"accent": "#6D4AFF", "bg": "#F5F6FA", "text": "#2A2A35"},
+            "dark":       {"accent": "#7C8CFF", "bg": "#14161C", "text": "#D6D9E0"},
+            "halflife":   {"accent": "#ff9900", "bg": "#1a1a1a", "text": "#e8e4dc"},
+            "cyberpunk":  {"accent": "#fcee0a", "bg": "#0a0a12", "text": "#00f0ff"},
+            "fahrenheit": {"accent": "#ff5500", "bg": "#1a0d08", "text": "#ffd9c0"},
+            "orwell":     {"accent": "#cccccc", "bg": "#0d0d0d", "text": "#8a8a8a"},
+            "console":    {"accent": "#33ff66", "bg": "#0a0e0a", "text": "#2a8a4a"},
+            "axkuon":     {"accent": "#a78bfa", "bg": "#0c0c0f", "text": "#e0e0e0"},
+        }
+        return palette.get(theme, palette["light"])
+
+    def _disable_update_notifications(self):
+        self.settings["skip_update_notifications"] = True
+        save_settings(self.settings)
+        self.toast(self.tr.get("update_notifications_disabled", "Уведомления об обновлении отключены"), "info", 2500)
+
+        self._show_overlay(config, on_action=lambda: webbrowser.open(url))
+
+    def _refresh_theme_options(self):
+        if hasattr(self, "theme_selector"):
+            self.theme_selector.options = self._build_theme_options()
+            self.theme_selector.update_label()
+
+    def _apply_egg_theme(self, theme_key):
+        self.settings["theme"] = theme_key
+        save_settings(self.settings)
+        self.apply_theme()
+        self.theme_selector.current_value = theme_key
+        self.theme_selector.update_label()
+        self.toast(f"{self.tr.get('theme_applied', 'Theme applied')}: {THEME_NAMES.get(theme_key, theme_key)}", "success", 3000)
+
+    # ============ UTILS ============
 
     def open_folder(self):
         p = os.path.abspath(self.save_dir)
