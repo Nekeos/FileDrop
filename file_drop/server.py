@@ -66,7 +66,7 @@ class FileTransferServer:
                 status = "ok"
                 print(f"[✓] File saved: {file_name}")
                 if self.on_file_received:
-                    self.on_file_received(file_name)
+                    self.on_file_received(file_name, received)  # добавляем размер
             else:
                 status = "error"
                 print(f"[✗] Incomplete: {received}/{file_size}")
